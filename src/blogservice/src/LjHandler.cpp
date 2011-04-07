@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: LjHandler.cpp 51 2011-04-04 19:58:41Z kua $ 
+ * $Id: LjHandler.cpp 53 2011-04-07 13:11:18Z kua $ 
  *
  * \file LjHandler.cpp
  * \brief CLjHandler implementation

@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: Synchronizer.h 52 2011-04-05 14:04:15Z kua $ */
+/* $Id: Synchronizer.h 53 2011-04-07 13:11:18Z kua $ */
 /*!
  * \file Synchronizer.h
  * \brief Header of CSynchronizer
@@ -77,11 +77,13 @@ namespace core
     QSet<CPost> m_ljPosts;
     QSet<CPost> m_ssPosts;
 
-    void reciveReports(QSet<CPost>);
-    void reciveLjPosts(QSet<CPost>);
-    void reciveSsPosts(QSet<CPost> posts);
-
     void synchronizePosts();
+
+  private slots:
+
+    void reciveReports(QSet<core::CPost>);
+    void reciveLjPosts(QSet<core::CPost>);
+    void reciveSsPosts(QSet<core::CPost>);
 
   public:
     CSynchronizer();

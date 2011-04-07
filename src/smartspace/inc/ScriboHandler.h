@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: ScriboHandler.h 52 2011-04-05 14:04:15Z kua $ */
+/* $Id: ScriboHandler.h 53 2011-04-07 13:11:18Z kua $ */
 /*!
  * \file ScriboHandler.h
  * \brief Header of CScriboHandler
@@ -48,6 +48,11 @@
 
 namespace SmartSpace
 {
+  enum ScriboObject{
+    SCRIBO_POST,
+    SCRIBO_COMMENT
+  };
+
   /*!
    * Class description. May use HTML formatting
    *
@@ -58,18 +63,18 @@ namespace SmartSpace
 
     QMap<QString, core::IBlogObject*> m_blogObjects;
     void (CScriboHandler::*m_postProcessor)(QList<Triple*> );
-    core::IBlogObject* (CScriboHandler::*m_factory)(QString);
     QString m_accountName;
+    ScriboObject m_scriboObject;
 
     void createPredicatesHash();
 
     virtual void postProcess(QList<Triple *> triples);
 
-    core::IBlogObject* createComment(QString id);
-    core::IBlogObject* createPost(QString id);
-
     void processBlogObjectsList(QList<Triple *> triple);
     void processBlogObjects(QList<Triple *> triple);
+
+    void emitCommentSignal();
+    void emitPostSignal();
 
   signals:
     void loadPostsDone(QSet<core::CPost> posts);

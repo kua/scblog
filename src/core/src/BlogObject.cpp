@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id$ 
+ * $Id: BlogObject.cpp 53 2011-04-07 13:11:18Z kua $ 
  *
  * \file BlogObject.cpp
  * \brief IBlogObject implementation
@@ -135,4 +135,4 @@ namespace core
 
 } // namespace core
 
-/* ===[ End of file $HeadURL$ ]=== */
+/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/core/src/BlogObject.cpp $ ]=== */

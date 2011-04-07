@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: Comment.h 52 2011-04-05 14:04:15Z kua $ */
+/* $Id: Comment.h 53 2011-04-07 13:11:18Z kua $ */
 /*!
  * \file Comment.h
  * \brief Header of CComment

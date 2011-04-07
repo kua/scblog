@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id$ */
+/* $Id: BlogObject.h 53 2011-04-07 13:11:18Z kua $ */
 /*!
  * \file BlogObject.h
  * \brief Header of IBlogObject
@@ -89,4 +89,4 @@ namespace core
 } // namespace core
 
 #endif //_BlogObject_H_7E8248A1_7178_4A66_AB87_73935CD6FE08_INCLUDED_
-/* ===[ End of file $HeadURL$ ]=== */
+/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/core/inc/BlogObject.h $ ]=== */

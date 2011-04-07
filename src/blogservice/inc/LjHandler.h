@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: LjHandler.h 51 2011-04-04 19:58:41Z kua $ */
+/* $Id: LjHandler.h 53 2011-04-07 13:11:18Z kua $ */
 /*!
  * \file LjHandler.h
  * \brief Header of CLjHandler

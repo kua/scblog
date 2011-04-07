@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: ConferenceHandler.h 51 2011-04-04 19:58:41Z kua $ */
+/* $Id: ConferenceHandler.h 53 2011-04-07 13:11:18Z kua $ */
 /*!
  * \file ConferenceHandler.h
  * \brief Header of CConferenceHandler

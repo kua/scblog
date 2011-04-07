@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: ResponseParser.h 50 2011-04-03 13:01:31Z kua $ */
+/* $Id: ResponseParser.h 53 2011-04-07 13:11:18Z kua $ */
 /*!
  * \file ResponseParser.h
  * \brief Header of CResponseParser

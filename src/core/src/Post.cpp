@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: Post.cpp 52 2011-04-05 14:04:15Z kua $ 
+ * $Id: Post.cpp 53 2011-04-07 13:11:18Z kua $ 
  *
  * \file Post.cpp
  * \brief Post implementation
@@ -176,6 +176,7 @@ namespace core
     os.setCodec("UTF-8");
 
     os << "UserId: " << post.userId() << "; ";
+    os << "Id: " << post.id() << "; ";
     os << "Title: " << post.title() << "; ";
     os << "Text: " << post.text() << "; ";
     os << "ditemid: " << post.ditemid() << "; ";

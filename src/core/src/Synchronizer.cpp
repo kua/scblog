@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: Synchronizer.cpp 52 2011-04-05 14:04:15Z kua $ 
+ * $Id: Synchronizer.cpp 53 2011-04-07 13:11:18Z kua $ 
  *
  * \file Synchronizer.cpp
  * \brief CSynchronizer implementation
@@ -40,6 +40,7 @@
  * PROJ: OSLL/scblog
  * ---------------------------------------------------------------- */
 
+#include <QDebug>
 #include <QSet>
 #include "Synchronizer.h"
 
@@ -49,13 +50,13 @@ namespace core
   {
     m_ljHandler = new BlogService::CLjHandler("http://www.livejournal.com","osll","scblog1861", this);
     m_conferenceHandler = new SmartSpace::CConferenceHandler("X",this);
-    m_scriboHandler = new SmartSpace::CScriboHandler("X",QString("account-blogProcessor"),this);
+    m_scriboHandler = new SmartSpace::CScriboHandler("X",QString("account-bs"),this);
 
     m_loadingFlags = 0;
 
-    QObject::connect(m_conferenceHandler, SIGNAL(loadReportsDone(QSet<CPost>)), this, SLOT(reciveReports(QSet<CPost>)));
-    QObject::connect(m_ljHandler, SIGNAL(loadPostsDone(QSet<CPost>)), this, SLOT(reciveLjPosts(QSet<CPost>)));
-    QObject::connect(m_scriboHandler, SIGNAL(loadDone(QSet<CPost>)), this, SLOT(reciveSsPosts(QSet<CPost>)));
+    QObject::connect(m_conferenceHandler, SIGNAL(loadReportsDone(QSet<core::CPost>)), this, SLOT(reciveReports(QSet<core::CPost>)));
+    QObject::connect(m_ljHandler, SIGNAL(loadPostsDone(QSet<core::CPost>)), this, SLOT(reciveLjPosts(QSet<core::CPost>)));
+    QObject::connect(m_scriboHandler, SIGNAL(loadPostsDone(QSet<core::CPost>)), this, SLOT(reciveSsPosts(QSet<core::CPost>)));
   }
 
   void CSynchronizer::requestPostSynchronization()
@@ -65,7 +66,7 @@ namespace core
     m_scriboHandler->loadPosts();
   }
 
-  void CSynchronizer::reciveReports(QSet<CPost> posts)
+  void CSynchronizer::reciveReports(QSet<core::CPost> posts)
   {
     m_reports = posts;
 
@@ -74,7 +75,7 @@ namespace core
     synchronizePosts();
   }
 
-  void CSynchronizer::reciveLjPosts(QSet<CPost> posts)
+  void CSynchronizer::reciveLjPosts(QSet<core::CPost> posts)
   {
     m_ljPosts = posts;
 
@@ -83,8 +84,20 @@ namespace core
     synchronizePosts();
   }
 
-  void CSynchronizer::reciveSsPosts(QSet<CPost> posts)
+  void CSynchronizer::reciveSsPosts(QSet<core::CPost> posts)
   {
+    qDebug() << "recieve Scribo Posts";
+
+    for(QSet<CPost>::const_iterator it = posts.begin(); it != posts.end(); ++it)
+    {
+      QString s;
+
+      QTextStream os(&s);
+      os << *it;
+
+      qDebug() << s;
+    }
+
     m_ssPosts = posts;
 
     m_loadingFlags |= BIT(SCRIBO_POSTS);
