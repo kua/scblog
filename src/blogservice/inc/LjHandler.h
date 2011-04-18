@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: LjHandler.h 53 2011-04-07 13:11:18Z kua $ */
+/* $Id: LjHandler.h 59 2011-04-18 14:14:17Z kua $ */
 /*!
  * \file LjHandler.h
  * \brief Header of CLjHandler
@@ -46,7 +46,8 @@
 #include <QString>
 #include <QNetworkRequest>
 #include <QNetworkAccessManager>
-#include <QSet>
+#include <QQueue>
+#include <QSharedPointer>
 #include "Post.h"
 #include "Comment.h"
 
@@ -62,14 +63,15 @@ namespace BlogService
 
     QNetworkAccessManager* m_networkManager;
     QUrl m_url;
+
     QString m_userName;
     QString m_password;
 
-    QList<core::CPost> m_postsBuffer;
-    QList<core::CComment> m_commentsBuffer;
-    core::CPost m_post;
+    QQueue<QSharedPointer<core::CPost> > m_postsOutputBuffer;
+    QQueue<QSharedPointer<core::CPost> > m_postsInputBuffer;
+    QQueue<QSharedPointer<core::CComment> > m_commentsOutputBuffer;
 
-    void (CLjHandler::*m_postProcessor)(QString);
+    void (BlogService::CLjHandler::*m_postProcessor)(QString);
 
     QString computeMD5(QString input);
     void sendRequest(QByteArray textRequest);
@@ -79,6 +81,8 @@ namespace BlogService
     void getPosts(QString response);
     void processPosts(QString response);
     void sendPost(QString response);
+    void checkSendingPost(QString response);
+    void checkSendingComment(QString response);
 
     void getComments(QString response);
     void processComments(QString response);
@@ -95,20 +99,29 @@ namespace BlogService
     void httpDone(QNetworkReply*);
 
   signals:
-  void loadPostsDone(QSet<core::CPost> posts);
+    void loadPostsDone(QList<QSharedPointer<core::CPost> > posts);
+    void loadCommentsDone(QList<QSharedPointer<core::CComment> > comments);
+    void sendPostDone(core::CId id, QSharedPointer<core::CPost> post);
+    void sendCommentDone(core::CId id, QSharedPointer<core::CComment> comment);
+
+    void transactionDone();
 
   public:
 
-    CLjHandler(QString serviceUrl, QString userName, QString password, QObject *parent = 0);
+    CLjHandler(const QString& serviceUrl, const QString& userName, const QString& password, QObject *parent = 0);
 
   public slots:
+    bool isReady();
+
     void login();
-
-    void loadComments(core::CPost post);
+    void loadComments();
     void loadPosts();
-    void sendPost(core::CPost post);
-    void sendComment(core::CComment comment);
+    void sendPost();
+    void sendComment();
 
+    void addPostToOutputBuffer(QSharedPointer<core::CPost> post);
+    void addPostToInputBuffer(QSharedPointer<core::CPost> post);
+    void addCommentToOutputBuffer(QSharedPointer<core::CComment> comment);
   }; // class CLjHandler
 } // namespace BlogService
 

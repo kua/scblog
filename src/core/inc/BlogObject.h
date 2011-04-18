@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: BlogObject.h 53 2011-04-07 13:11:18Z kua $ */
+/* $Id: BlogObject.h 59 2011-04-18 14:14:17Z kua $ */
 /*!
  * \file BlogObject.h
  * \brief Header of IBlogObject
@@ -45,6 +45,9 @@
 
 #include <QObject>
 #include <QTextStream>
+#include <QSharedPointer>
+#include "triple.h"
+#include "Id.h"
 
 namespace core
 {
@@ -56,17 +59,17 @@ namespace core
   {
     Q_OBJECT
 
-    QString m_id;
     QString m_title;
     QString m_text;
-    QString m_ditemid;
+    QString m_ljPostId;
+    QSharedPointer<CId> m_id;
 
   protected:
     virtual QString generateId();
 
   public:
-    IBlogObject(QString id = QString());
-    IBlogObject(QString title, QString text, QString id = QString());
+    IBlogObject();
+    IBlogObject(QString title, QString text);
     IBlogObject(const IBlogObject& obj);
 
     ~IBlogObject() {};
@@ -75,13 +78,18 @@ namespace core
 
     void setTitle(QString title);
     void setText(QString text);
-    void setDitemId(QString ditemid);
-    void setId(QString id);
+    void setId(QSharedPointer<CId> id);
+    void setPostId(QString id);
 
     QString title() const;
     QString text() const;
-    QString id() const;
-    QString ditemid() const;
+    QString postId() const;
+    QSharedPointer<CId> id() const;
+    QSharedPointer<CId> id();
+
+    virtual QSharedPointer<CId> parentId() = 0;
+    virtual QList<Triple *> triplets() const = 0;
+    virtual void generateSsId() = 0;
 
     friend QTextStream& operator<<(QTextStream& os, const IBlogObject& blogObject);
   }; // class IBlogObject

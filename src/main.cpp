@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: main.cpp 31 2011-03-04 23:38:39Z kua $ 
+ * $Id: main.cpp 59 2011-04-18 14:14:17Z kua $ 
  *
  * \file main.cpp
  *
@@ -40,10 +40,7 @@
  * ---------------------------------------------------------------- */
 
 #include <QtCore>
-#include "LjHandler.h"
-#include "ScriboHandler.h"
-#include "ConferenceHandler.h"
-#include "Post.h"
+#include "BlogProcessor.h"
 #include "q_whiteboard_node.h"
 #include "q_sib_discovery.h"
 #include <glib-object.h>
@@ -56,11 +53,8 @@ int main(int argc, char *argv[])
 
   g_type_init();
 
-  BlogService::CLjHandler handler("http://www.livejournal.com","osll","scblog1861");
-  //handler.getPosts();
-  SmartSpace::CScriboHandler scriboHandler("X","account-bs");
-  SmartSpace::CConferenceHandler conferenceHandler("X");
-  scriboHandler.loadPosts();
+  core::CBlogProcessor processor;
+  processor.init();
 
   return app.exec();
 }

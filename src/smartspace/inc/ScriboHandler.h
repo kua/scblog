@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: ScriboHandler.h 53 2011-04-07 13:11:18Z kua $ */
+/* $Id: ScriboHandler.h 59 2011-04-18 14:14:17Z kua $ */
 /*!
  * \file ScriboHandler.h
  * \brief Header of CScriboHandler
@@ -44,6 +44,8 @@
 #define _ScriboHandler_H_BAAEF3DD_2A17_47A6_B53E_481B31FA3BCA_INCLUDED_
 
 #include <QSet>
+#include <QQueue>
+#include <QPair>
 #include "SSHandler.h"
 
 namespace SmartSpace
@@ -61,32 +63,45 @@ namespace SmartSpace
   {
     Q_OBJECT
 
-    QMap<QString, core::IBlogObject*> m_blogObjects;
+    QMap<QString, QSharedPointer<core::IBlogObject> > m_blogObjects;
     void (CScriboHandler::*m_postProcessor)(QList<Triple*> );
     QString m_accountName;
-    ScriboObject m_scriboObject;
+
+    QQueue<QPair<QString, QList<Triple*> > > m_queryQueue;
 
     void createPredicatesHash();
 
     virtual void postProcess(QList<Triple *> triples);
 
-    void processBlogObjectsList(QList<Triple *> triple);
-    void processBlogObjects(QList<Triple *> triple);
+    void emitCommentSignal(QSet<QString> readyBlogObjects);
+    void emitPostSignal(QSet<QString> readyBlogObjects);
 
-    void emitCommentSignal();
-    void emitPostSignal();
+    void subscribeRefreshComments();
+    ScriboObject defineScriboObject(QString name, QString& id);
+
+  private slots:
+    void refreshCommentsRequest();
+    void refreshPostsRequest();
+    void processBlogObjectsList(int success);
+    void processBlogObjects(int success);
+    void scriboQuery();
 
   signals:
-    void loadPostsDone(QSet<core::CPost> posts);
-    void loadCommentsDone(QSet<core::CComment> comments);
+    void loadPostsDone( QList<QSharedPointer<core::CPost> > posts);
+    void loadCommentsDone(QList<QSharedPointer<core::CComment> > comments);
+    void refreshComments();
 
   public:
-    CScriboHandler(QString sibUri, QString accountName, QObject *parent = 0);
+    CScriboHandler(QString sibUri, QObject *parent = 0);
     ~CScriboHandler(){};
 
-    void loadComments(QString postId);
-    void loadPosts();
+    void loadComments(QString parentId);
+    void loadPosts(QString accountName);
     
+    void sendPosts(QList<core::CPost> posts);
+    void sendBlogObject(QSharedPointer<core::IBlogObject> object);
+    void sendBlogObjects(QList <QSharedPointer<core::IBlogObject> > objects);
+
   }; // class CScriboHandler
 } // namespace smartspace
 

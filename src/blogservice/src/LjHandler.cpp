@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: LjHandler.cpp 53 2011-04-07 13:11:18Z kua $ 
+ * $Id: LjHandler.cpp 59 2011-04-18 14:14:17Z kua $ 
  *
  * \file LjHandler.cpp
  * \brief CLjHandler implementation
@@ -46,6 +46,7 @@
 #include <QNetworkCookieJar>
 #include <QSharedPointer>
 #include <QDateTime>
+#include <QThread>
 #include <QTime>
 #include <QDate>
 #include "LjHandler.h"
@@ -54,14 +55,16 @@
 
 namespace BlogService
 {
-  CLjHandler::CLjHandler(QString serviceUrl, QString userName, QString password, QObject *parent) :
+  CLjHandler::CLjHandler(const QString& serviceUrl, const QString& userName, const QString& password, QObject *parent) :
     QObject(parent), m_userName(userName), m_password(password)
   {
-    m_networkManager = new QNetworkAccessManager(this);
+    m_networkManager = new QNetworkAccessManager();
     m_url.setUrl(serviceUrl + "/interface/xmlrpc");
 
+    m_postProcessor = NULL;
+
     connect(m_networkManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(httpDone(QNetworkReply*)));
-  }
+   }
 
   void CLjHandler::sendRequest(QByteArray textRequest)
   {
@@ -86,6 +89,11 @@ namespace BlogService
       (this->*m_postProcessor)(replyText);
   }
 
+  bool CLjHandler::isReady()
+  {
+    return (m_postProcessor == NULL);
+  }
+
   void CLjHandler::login()
   {
     m_postProcessor = &CLjHandler::loginChallenge;
@@ -100,26 +108,26 @@ namespace BlogService
     getChallenge();
   }
 
-  void CLjHandler::loadComments(core::CPost post)
+  void CLjHandler::loadComments()
   {
     m_postProcessor = &CLjHandler::getComments;
-    m_post = post;
 
     getChallenge();
   }
 
-  void CLjHandler::sendPost(core::CPost post)
+  void CLjHandler::sendPost()
   {
+    if (m_postsOutputBuffer.empty())
+      return;
+
     m_postProcessor = &CLjHandler::sendPost;
-    m_postsBuffer.push_back(post);
 
     getChallenge();
   }
 
-  void CLjHandler::sendComment(core::CComment comment)
+  void CLjHandler::sendComment()
   {
     m_postProcessor = &CLjHandler::sendComment;
-    m_commentsBuffer.push_back(comment);
 
     getChallenge();
   }
@@ -221,37 +229,35 @@ namespace BlogService
 
   void CLjHandler::getPosts(QString response)
   {
-     m_postProcessor = &CLjHandler::processPosts;
+    QMap<QString, QString> parameters = initParametersMap(response);
 
-     QMap<QString, QString> parameters = initParametersMap(response);
+    parameters.insert("selecttype", "lastn");
+    parameters.insert("howmany", "50");
+    parameters.insert("truncate", "20");
+    parameters.insert("noprops", "1");
+    parameters.insert("lineendings", "unix");
 
-     parameters.insert("selecttype", "lastn");
-     parameters.insert("howmany", "50");
-     parameters.insert("truncate", "20");
-     parameters.insert("noprops", "1");
-     parameters.insert("lineendings", "unix");
+    QString request = CRequestCreator::createRequest("LJ.XMLRPC.getevents", parameters);
 
-     QString request = CRequestCreator::createRequest("LJ.XMLRPC.getevents", parameters);
+    sendRequest(request.toUtf8());
 
-     sendRequest(request.toUtf8());
+    m_postProcessor = &CLjHandler::processPosts;
   }
 
   void CLjHandler::sendPost(QString response)
   {
-    m_postProcessor = NULL;
-
-    if (m_postsBuffer.empty())
+    if(m_postsOutputBuffer.empty())
       return;
 
     QMap<QString, QString> parameters = initParametersMap(response);
-    core::CPost post = m_postsBuffer.first();
+    QSharedPointer<core::CPost> post = m_postsOutputBuffer.first();
 
     QDateTime now = QDateTime::currentDateTime();
     QDate date = now.date();
     QTime time = now.time();
 
-    parameters.insert("event", post.text());
-    parameters.insert("subject", post.title());
+    parameters.insert("event", post->text());
+    parameters.insert("subject", post->title());
     parameters.insert("year", QString::number(date.year()));
     parameters.insert("mon", QString::number(date.month()));
     parameters.insert("day", QString::number(date.day()));
@@ -260,50 +266,92 @@ namespace BlogService
 
     QString request = CRequestCreator::createRequest("LJ.XMLRPC.postevent", parameters);
 
+    m_postProcessor = &CLjHandler::checkSendingPost;
+
     sendRequest(request.toUtf8());
+  }
+
+  void CLjHandler::checkSendingPost(QString response)
+  {
+    CResponseParser parser(response);
+
+    QString dtalkid = parser.parameter("url");
+
+    if (!dtalkid.isNull())
+    {
+      QSharedPointer<core::CPost> post = m_postsOutputBuffer.dequeue();
+      post->id()->setLjId(CResponseParser::parseUrl(QUrl(dtalkid)));
+
+      emit sendPostDone(*post->id(), post);
+    }
+
+    m_postProcessor = NULL;
+
+    emit transactionDone();
+  }
+
+  void CLjHandler::checkSendingComment(QString response)
+  {
+    CResponseParser parser(response);
+
+    QString dtalkid = parser.parameter("dtalkid");
+    QString status = parser.parameter("status");
+
+    if (status== "OK")
+    {
+      QSharedPointer<core::CComment> comment = m_commentsOutputBuffer.dequeue();
+      comment->id()->setLjId(dtalkid);
+      emit sendCommentDone(*comment->id(), comment);
+    }
+
+    m_postProcessor = NULL;
+
+    emit transactionDone();
   }
 
   void CLjHandler::sendComment(QString response)
   {
-    m_postProcessor = NULL;
-
-    if (m_commentsBuffer.empty())
+    if(m_commentsOutputBuffer.empty())
       return;
 
     QMap<QString, QString> parameters = initParametersMap(response);
-    core::CComment comment = m_commentsBuffer.first();
+    QSharedPointer<core::CComment> comment = m_commentsOutputBuffer.first();
 
     QString journal = m_userName.replace('-', '_');
 
-    parameters.insert("body", comment.text());
-    parameters.insert("subject", comment.title());
-    parameters.insert("ditemid", comment.ditemid());
+    parameters.insert("body", comment->text());
+    parameters.insert("subject", comment->title());
+    parameters.insert("ditemid", comment->postId());
     parameters.insert("journal", journal);
-    parameters.insert("parenttalkid", "0");
+    parameters.insert("parent", comment->parentId()->ljId());
 
     QString request = CRequestCreator::createRequest("LJ.XMLRPC.addcomment", parameters);
+
+    m_postProcessor = &CLjHandler::checkSendingComment;
 
     sendRequest(request.toUtf8());
   }
 
   void CLjHandler::processPosts(QString response)
   {
-    m_postProcessor = NULL;
-
     CResponseParser parser(response);
-    QSet<core::CPost> posts = parser.parseElements< core::CPost >().toSet();
+    QList<QSharedPointer<core::CPost> > posts = parser.parseElements<core::CPost> ();
 
-    for(QSet<core::CPost>::const_iterator it = posts.begin(); it != posts.end(); ++it)
+    for(QList<QSharedPointer<core::CPost> >::const_iterator it = posts.begin(); it != posts.end(); ++it)
     {
       QString s;
 
       QTextStream os(&s);
-      os << *it;
+      os << **it;
 
       qDebug() << s;
     }
 
     emit loadPostsDone(posts);
+
+    m_postProcessor = NULL;
+
+    emit transactionDone();
   }
 
   void CLjHandler::getComments(QString response)
@@ -313,7 +361,9 @@ namespace BlogService
     QString journal = m_userName.replace('-', '_');
     QMap<QString, QString> parameters = initParametersMap(response);
 
-    parameters.insert("ditemid", m_post.ditemid());
+    qDebug() << "LjID" << m_postsInputBuffer.first()->id()->ljId();
+
+    parameters.insert("ditemid", m_postsInputBuffer.first()->id()->ljId());
     parameters.insert("journal", journal);
     parameters.insert("page", "1");
 
@@ -324,26 +374,51 @@ namespace BlogService
 
   void CLjHandler::processComments(QString response)
   {
-    m_postProcessor = NULL;
-
     qDebug() << "process comments";
     CResponseParser parser(response);
-    QSet<core::CComment> comments = parser.parseElements< core::CComment >().toSet();
+    QList<QSharedPointer<core::CComment> > comments = parser.parseElements<core::CComment> ();
+    QString postId = m_postsInputBuffer.dequeue()->id()->ljId();
 
-    qDebug() << "Comments size" <<  comments.size();
+    foreach(QSharedPointer<core::CComment> comment, comments)
+    {
+      comment->setPostId(postId);
 
-    for(QSet<core::CComment>::const_iterator it = comments.begin(); it != comments.end(); ++it)
+      if (!comment->parentId()->isLjIdSet())
+        comment->parentId()->setLjId(postId);
+    }
+
+    qDebug() << "Comments size" << comments.size();
+
+    for(QList<QSharedPointer<core::CComment> >::const_iterator it = comments.begin(); it != comments.end(); ++it)
     {
       QString s;
 
       QTextStream os(&s);
-      os << *it;
+      os << **it;
 
       qDebug() << s;
     }
+
+    m_postProcessor = NULL;
+
+    emit loadCommentsDone(comments);
+    emit transactionDone();
   }
 
+  void CLjHandler::addPostToOutputBuffer(QSharedPointer<core::CPost> post)
+  {
+    m_postsOutputBuffer.enqueue(post);
+  }
 
+  void CLjHandler::addPostToInputBuffer(QSharedPointer<core::CPost> post)
+  {
+    m_postsInputBuffer.enqueue(post);
+  }
+
+  void CLjHandler::addCommentToOutputBuffer(QSharedPointer<core::CComment> comment)
+  {
+    m_commentsOutputBuffer.enqueue(comment);
+  }
 } // namespace BlogService
 
 /* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/blogservice/src/LjHandler.cpp $ ]=== */

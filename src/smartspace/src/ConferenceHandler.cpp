@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: ConferenceHandler.cpp 53 2011-04-07 13:11:18Z kua $ 
+ * $Id: ConferenceHandler.cpp 58 2011-04-16 19:11:21Z kua $ 
  *
  * \file ConferenceHandler.cpp
  * \brief CConferenceHandler implementation
@@ -79,8 +79,8 @@ namespace SmartSpace
     {
       QString userId = (*it)->object().node();
 
-      core::CPost post;
-      post.setUserId(userId);
+      QSharedPointer<core::CReport> post =  QSharedPointer<core::CReport>(new core::CReport());
+      post->setUserId(userId);
 
       m_posts[userId] = post;
 
@@ -114,7 +114,7 @@ namespace SmartSpace
         m_queryList.push_back(createDefaultTriple(reportId, KEYWORDS, ANY));
       }
 
-      m_posts[userId].putUserData((*it)->predicate().node(), (*it)->object().node());
+      m_posts[userId]->putUserData((*it)->predicate().node(), (*it)->object().node());
     }
     m_postProcessor = &CConferenceHandler::processPresentation;
   }
@@ -130,23 +130,23 @@ namespace SmartSpace
       QString presentatonId = (*it)->subject().node();
       QString userId = m_presentationsCache.value(presentatonId);
 
-      m_posts[userId].putPresentationData((*it)->predicate().node(), (*it)->object().node());
-      m_posts[userId].generatePostData();
+      m_posts[userId]->putPresentationData((*it)->predicate().node(), (*it)->object().node());
+      m_posts[userId]->generatePostData();
     }
 
-    for(QMap<QString, core::CPost>::const_iterator it = m_posts.begin(); it != m_posts.end(); ++it)
+    for(QMap<QString, QSharedPointer<core::CReport> >::const_iterator it = m_posts.begin(); it != m_posts.end(); ++it)
     {
       QString s;
 
       QTextStream os(&s);
-      os << it.value();
+      os << *it.value();
 
       qDebug() << s;
     }
 
     m_postProcessor = NULL;
 
-    emit loadReportsDone(m_posts.values().toSet());
+    emit loadReportsDone(m_posts.values());
 
     m_posts.clear();///
   }

@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: Comment.cpp 53 2011-04-07 13:11:18Z kua $ 
+ * $Id: Comment.cpp 59 2011-04-18 14:14:17Z kua $ 
  *
  * \file Comment.cpp
  * \brief CComment implementation
@@ -43,16 +43,21 @@
 #include <QUuid>
 #include <QDebug>
 #include "Comment.h"
+#include "Id.h"
+#include "SSHandler.h"
+#include "Ontology.h"
 
 namespace core
 {
-  CComment::CComment(QString id):IBlogObject(id)
+  CComment::CComment()
   {
+    m_parentId = QSharedPointer<CId>(new CId());
   }
 
-  CComment::CComment(QString title, QString text, QString id):
-    IBlogObject(title, text, id)
+  CComment::CComment(QString title, QString text):
+    IBlogObject(title, text)
   {
+    m_parentId = QSharedPointer<CId>(new CId());
   }
 
   CComment::CComment(const CComment& obj) :
@@ -73,19 +78,46 @@ namespace core
     return (title() == obj.title());
   }
 
-  QString CComment::generateId()
+  void CComment::generateSsId()
   {
-    return QString("comment-" + IBlogObject::generateId());
+    id()->setSsId(QString("comment-" + generateId()));
+  }
+
+  void CComment::setParentId(QSharedPointer<CId> id)
+  {
+    m_parentId = id;
+  }
+
+  QSharedPointer<CId> CComment::parentId()
+  {
+    return m_parentId;
+  }
+
+  QSharedPointer<CId> CComment::parentId() const
+  {
+    return m_parentId;
+  }
+
+  QList<Triple *> CComment::triplets() const
+  {
+    QList<Triple *> triplets;
+
+    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(parentId()->ssId(), SmartSpace::HAS_COMMENT, id()->ssId()));
+    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TYPE, SmartSpace::COMMENT));
+    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TITLE, title()));
+    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TEXT, text()));
+
+    return triplets;
   }
 
   QTextStream& operator<<(QTextStream& os, const CComment& comment)
   {
     os.setCodec("UTF-8");
 
-    os << "Id: " << comment.id() << "; ";
+    os << "Id: " << comment.id()->ssId() << "; ";
     os << "Title: " << comment.title() << "; ";
     os << "Text: " << comment.text() << "; ";
-    os << "ditemId: " << comment.ditemid() << "; ";
+    os << "ditemId: " << comment.id()->ljId() << "; ";
 
     return os;
   }

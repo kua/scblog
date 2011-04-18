@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: SSHandler.cpp 51 2011-04-04 19:58:41Z kua $ 
+ * $Id: SSHandler.cpp 58 2011-04-16 19:11:21Z kua $ 
  *
  * \file SSHandler.cpp
  * \brief CSSHandler implementation
@@ -70,16 +70,18 @@ namespace SmartSpace
     QList<Triple*> list;
     list.push_back(triple);
 
-    int result = m_node->insert(list);
+    insert(list);
+  }
+
+  void CSSHandler::insert(QList<Triple*> triplets)
+  {
+    int result = m_node->insert(triplets);
 
     qDebug() << ((result >= 0) ? "insert success" : "insert failed");
   }
 
-  void CSSHandler::remove(Triple* triple)
+  void CSSHandler::remove(QList<Triple*> list)
   {
-    QList<Triple*> list;
-    list.push_back(triple);
-
     int result = m_node->remove(list);
 
     qDebug() << ((result >= 0) ? "remove success" : "remove failed");
@@ -107,7 +109,7 @@ namespace SmartSpace
 
   void CSSHandler::query()
   {
-    TemplateQuery *query = new TemplateQuery(m_node.data());
+    QSharedPointer<TemplateQuery> query = QSharedPointer<TemplateQuery>(new TemplateQuery(m_node.data()));
     query->setObjectName("query");
 
     if(!m_queries.contains(query->objectName()))
@@ -120,7 +122,7 @@ namespace SmartSpace
       qDebug() << (*it)->object().node();
     }
 
-    connect(query, SIGNAL(finished(int)), this, SLOT(queryDone(int)));
+    connect(query.data(), SIGNAL(finished(int)), this, SLOT(queryDone(int)));
     query->query(m_queryList);
 
     while(m_queryList.count())
@@ -131,11 +133,11 @@ namespace SmartSpace
   {
     if(m_queries.contains(sender()->objectName()))
     {
-      TemplateQuery *templateQuery = m_queries[sender()->objectName()];
+      QSharedPointer<TemplateQuery> templateQuery = m_queries[sender()->objectName()];
 
       if(success == 0)
       {
-        QList<Triple *> results = static_cast<TemplateQuery *> (templateQuery)->results();
+        QList<Triple *> results = templateQuery->results();
 
         QList<Triple *>::iterator it;
 
@@ -149,39 +151,54 @@ namespace SmartSpace
         postProcess(results);
 
         m_queries.remove(sender()->objectName());
-        delete templateQuery;
       }
     }
   }
 
-  void CSSHandler::indicate()
+  QSharedPointer<TemplateSubscription> CSSHandler::getSubscription(QString name)
   {
-    if(m_subscriptions.contains(sender()->objectName()))
-    {
-      TemplateSubscription* subscription = m_subscriptions[sender()->objectName()];
+    if(m_subscriptions.contains(name))
+      return m_subscriptions[name];
 
-      QList<Triple *> results = subscription->results();
-    }
+    return QSharedPointer<TemplateSubscription>();
   }
 
-  void CSSHandler::subscribe(Triple* triple)
+  QSharedPointer<TemplateQuery> CSSHandler::getQuery(QString name)
   {
-    TemplateSubscription* subscription = new TemplateSubscription(m_node.data());
+    if(m_queries.contains(name))
+      return m_queries[name];
 
-    subscription->setObjectName("subscription");
+    return QSharedPointer<TemplateQuery>();
+  }
+
+  QSharedPointer<TemplateSubscription> CSSHandler::creatreSubscription(QString name)
+  {
+    QSharedPointer<TemplateSubscription> subscription = QSharedPointer<TemplateSubscription>(new TemplateSubscription(m_node.data()));
+
+    subscription->setObjectName(name);
 
     if(!m_subscriptions.contains(subscription->objectName()))
       m_subscriptions[subscription->objectName()] = subscription;
 
-    connect(subscription, SIGNAL(indication()), this, SLOT(indicate()) );
+    return subscription;
+  }
 
-    QList<Triple *> list;
-    list.append(triple);
+  QSharedPointer<TemplateQuery> CSSHandler::creatreQuery(QString name)
+  {
+    QSharedPointer<TemplateQuery> query = QSharedPointer<TemplateQuery>(new TemplateQuery(m_node.data()));
 
-    subscription->subscribe(list);
+    query->setObjectName(name);
 
-    while(list.count())
-      delete list.takeFirst();
+    if(!m_queries.contains(query->objectName()))
+      m_queries[query->objectName()] = query;
+
+    return query;
+  }
+
+  void CSSHandler::deleteQuery(QString name)
+  {
+    if(m_queries.contains(name))
+      m_queries.remove(name);
   }
 } // namespace SmartSpace
 

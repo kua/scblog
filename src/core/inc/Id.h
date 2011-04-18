@@ -29,10 +29,10 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: Comment.h 59 2011-04-18 14:14:17Z kua $ */
+/* $Id: Id.h 59 2011-04-18 14:14:17Z kua $ */
 /*!
- * \file Comment.h
- * \brief Header of CComment
+ * \file Id.h
+ * \brief Header of CId
  * \todo add comment here
  *
  * File description
@@ -40,51 +40,55 @@
  * PROJ: OSLL/scblog
  * ---------------------------------------------------------------- */
 
-#ifndef _Comment_H_31BEB193_A0F6_4E28_BABF_C9FC82CD3415_INCLUDED_
-#define _Comment_H_31BEB193_A0F6_4E28_BABF_C9FC82CD3415_INCLUDED_
+#ifndef _Id_H_D596BCAC_5880_4100_899C_1967EB9D33B0_INCLUDED_
+#define _Id_H_D596BCAC_5880_4100_899C_1967EB9D33B0_INCLUDED_
 
-#include <QSharedPointer>
-#include "BlogObject.h"
+#include <QObject>
+#include <QDebug>
 
 namespace core
 {
- /*!
+  /*!
    * Class description. May use HTML formatting
    *
    */
-  class CComment:
-    public IBlogObject
+  class CId: public QObject
   {
-    Q_OBJECT
+  Q_OBJECT
 
-    QSharedPointer<CId> m_parentId;
+    QString m_ssId;
+    QString m_ljId;
 
   public:
-    CComment();
-    CComment(QString title, QString text);
-    CComment(const CComment& obj);
-    
-    ~CComment() {};
-    CComment& operator=(const CComment& obj);
-    bool operator==(const CComment& obj) const;
+    CId();
+    CId(QString& ssId, QString& ljId);
+    CId(const CId& obj);
 
-    void setParentId(QSharedPointer<CId> id);
+    CId& operator=(const CId& obj);
+    bool operator==(const CId& obj);
 
-    virtual QSharedPointer<CId> parentId();
-    QSharedPointer<CId> parentId() const;
+    void setLjId(QString ljId);
+    void setSsId(QString ssId);
 
-    virtual void generateSsId();
-    virtual QList<Triple *> triplets() const;
+    QString ssId() const;
+    QString ljId() const;
 
-    friend QTextStream& operator<< (QTextStream& os, const CComment& comment);
-  }; // class CComment
+    bool isLjIdSet() const;
+    bool isSsIdSet() const;
+    bool isComlete() const;
+  }; // class CId
 } // namespace core
 
-inline uint qHash(const core::CComment& comment)
+inline bool operator<(const core::CId& first, const core::CId& second)
 {
-   return qHash(comment.title());
+  bool equals = (((!first.ssId().isEmpty()) && (first.ssId() == second.ssId()))
+      || ((!first.ljId().isEmpty()) && (first.ljId() == second.ljId())));
+
+  if (equals)
+    return false;
+
+  return (QString(first.ssId() + first.ljId()) < QString(second.ssId() + second.ljId()));
 }
 
-#endif //_Comment_H_31BEB193_A0F6_4E28_BABF_C9FC82CD3415_INCLUDED_
-
-/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/core/inc/Comment.h $ ]=== */
+#endif //_Id_H_D596BCAC_5880_4100_899C_1967EB9D33B0_INCLUDED_
+/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/core/inc/Id.h $ ]=== */

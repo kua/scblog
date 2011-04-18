@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: BlogObject.cpp 53 2011-04-07 13:11:18Z kua $ 
+ * $Id: BlogObject.cpp 59 2011-04-18 14:14:17Z kua $ 
  *
  * \file BlogObject.cpp
  * \brief IBlogObject implementation
@@ -46,19 +46,19 @@
 
 namespace core
 {
-  IBlogObject::IBlogObject(QString id)
+  IBlogObject::IBlogObject()
   {
-    setId(id);
+    m_id = QSharedPointer<CId> (new CId);
   }
 
-  IBlogObject::IBlogObject(QString title, QString text, QString id) :
+  IBlogObject::IBlogObject(QString title, QString text) :
     m_title(title), m_text(text)
   {
-    setId(id);
+    m_id = QSharedPointer<CId> (new CId);
   }
 
   IBlogObject::IBlogObject(const IBlogObject& obj) :
-    QObject(), m_id(obj.id()), m_title(obj.title()), m_text(obj.text()), m_ditemid(obj.id())
+    QObject(), m_title(obj.title()), m_text(obj.text()), m_id(obj.id())
   {
   }
 
@@ -86,19 +86,14 @@ namespace core
     m_text = text;
   }
 
-  void IBlogObject::setDitemId(QString ditemid)
+  void IBlogObject::setPostId(QString postId)
   {
-    m_ditemid = ditemid;
+    m_ljPostId = postId;
   }
 
-  void IBlogObject::setId(QString id)
+  QString IBlogObject::postId() const
   {
-    m_id = id.isEmpty() ? generateId() : id;
-  }
-
-  QString IBlogObject::id() const
-  {
-    return m_id;
+    return m_ljPostId;
   }
 
   QString IBlogObject::text() const
@@ -111,9 +106,19 @@ namespace core
     return m_title;
   }
 
-  QString IBlogObject::ditemid() const
+  void IBlogObject::setId(QSharedPointer<CId> id)
   {
-    return m_ditemid;
+    m_id = id;
+  }
+
+  QSharedPointer<CId> IBlogObject::id()
+  {
+    return m_id;
+  }
+
+  QSharedPointer<CId> IBlogObject::id() const
+  {
+    return m_id;
   }
 
   QString IBlogObject::generateId()
@@ -125,10 +130,10 @@ namespace core
   {
     os.setCodec("UTF-8");
 
-    os << "Id: " << blogObject.id() << "; ";
+    os << "Id: " << blogObject.id()->ssId() << "; ";
     os << "Title: " << blogObject.title() << "; ";
     os << "Text: " << blogObject.text() << "; ";
-    os << "ditemId: " << blogObject.ditemid() << "; ";
+    os << "ditemId: " << blogObject.id()->ljId() << "; ";
 
     return os;
   }

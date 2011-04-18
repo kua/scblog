@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: SSHandler.h 51 2011-04-04 19:58:41Z kua $ */
+/* $Id: SSHandler.h 58 2011-04-16 19:11:21Z kua $ */
 /*!
  * \file CSSHandler.h
  * \brief Header of CSSHandler
@@ -65,14 +65,13 @@ namespace SmartSpace
 
     QSharedPointer<QWhiteBoardNode> m_node;
 
-    QHash<QString, TemplateQuery*> m_queries;
-    QHash<QString, TemplateSubscription *> m_subscriptions;
+    QHash<QString, QSharedPointer<TemplateQuery> > m_queries;
+    QHash<QString, QSharedPointer<TemplateSubscription> > m_subscriptions;
 
     virtual void postProcess(QList<Triple *> triples) =0;
 
   private slots:
     void queryDone(int success);
-    void indicate();
     void query();
 
   public:
@@ -83,9 +82,14 @@ namespace SmartSpace
 
     void join(QString sibUri);
     void insert(Triple* triple);
-    void remove(Triple* triple);
+    void insert(QList<Triple*> triplets);
+    void remove(QList<Triple*> list);
     void query(Triple* triple);
-    void subscribe(Triple* triple);
+    QSharedPointer<TemplateSubscription> creatreSubscription(QString name);
+    QSharedPointer<TemplateQuery> creatreQuery(QString name);
+    QSharedPointer<TemplateSubscription> getSubscription(QString name);
+    QSharedPointer<TemplateQuery> getQuery(QString name);
+    void deleteQuery(QString name);
 
     static Triple* createDefaultTriple(QString subject, QString predicat, QString object);
     static Triple* createLiteralTriple(QString subject, QString predicat, QString object);

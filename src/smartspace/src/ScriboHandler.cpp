@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: ScriboHandler.cpp 53 2011-04-07 13:11:18Z kua $ 
+ * $Id: ScriboHandler.cpp 59 2011-04-18 14:14:17Z kua $ 
  *
  * \file ScriboHandler.cpp
  * \brief CScriboHandler implementation
@@ -48,12 +48,16 @@
 
 namespace SmartSpace
 {
+  static const QString LOAD_POSTS = QString("LoadPosts");
+  static const QString LOAD_COMMENTS = QString("LoadComments");
+
   static QHash<QString, void(core::IBlogObject::*)(QString)> PREDICATES;
 
-  CScriboHandler::CScriboHandler(QString sibUri, QString accountName, QObject *parent) :
-    CSSHandler(sibUri, parent), m_accountName(accountName)
+  CScriboHandler::CScriboHandler(QString sibUri, QObject *parent) :
+    CSSHandler(sibUri, parent)
   {
     createPredicatesHash();
+    subscribeRefreshComments();
   }
 
   void CScriboHandler::postProcess(QList<Triple *> triples)
@@ -72,114 +76,251 @@ namespace SmartSpace
     PREDICATES.insert(TITLE, &core::IBlogObject::setTitle);
   }
 
-  void CScriboHandler::loadComments(QString postId)
+  void CScriboHandler::loadComments(QString parentId)
   {
-    m_postProcessor = &CScriboHandler::processBlogObjectsList;
-    m_scriboObject = SCRIBO_COMMENT;
+    QSharedPointer<TemplateQuery> query = creatreQuery(QString(LOAD_COMMENTS + parentId));
 
-    query(createDefaultTriple(postId, HAS_COMMENT, ANY));
+    connect(query.data(), SIGNAL(finished(int)), this, SLOT(processBlogObjectsList(int)));
+
+    Triple *triple = createDefaultTriple(parentId, HAS_COMMENT, ANY);
+
+    QList<Triple *> list;
+    list.append(triple);
+
+    query->query(list);
+
+    while(list.count())
+      delete list.takeFirst();
   }
 
-  void CScriboHandler::loadPosts()
+  void CScriboHandler::loadPosts(QString accountName)
   {
-    m_postProcessor = &CScriboHandler::processBlogObjectsList;
-    m_scriboObject = SCRIBO_POST;
+    QSharedPointer<TemplateQuery> query = creatreQuery(QString(LOAD_POSTS + accountName));
 
-    query(createDefaultTriple(m_accountName, HAS_POST, ANY));
+    connect(query.data(), SIGNAL(finished(int)), this, SLOT(processBlogObjectsList(int)));
+
+    Triple *triple = createDefaultTriple(accountName, HAS_POST, ANY);
+
+    QList<Triple *> list;
+    list.append(triple);
+
+    query->query(list);
+
+    while(list.count())
+      delete list.takeFirst();
   }
 
-  void CScriboHandler::processBlogObjectsList(QList<Triple *> triple)
+  void CScriboHandler::processBlogObjectsList(int success)
   {
     qDebug() << "processBlogObjectsList";
 
-    m_queryList.clear();
+    QString queryName = sender()->objectName();
+    QSharedPointer<TemplateQuery> query = getQuery(queryName);
 
-    for(QList<Triple *>::iterator it = triple.begin(); it != triple.end(); ++it)
+    if(!query.isNull() && (success == 0))
     {
-      QString id = (*it)->object().node();
-      core::IBlogObject* obj;
+      QList<Triple *> results = query->results();
+      QString parentId;
+      ScriboObject scriboObject = defineScriboObject(queryName, parentId);
+      QList<Triple *> queryList;
 
-      switch (m_scriboObject) {
+      for(QList<Triple *>::iterator it = results.begin(); it != results.end(); ++it)
+      {
+        QString id = (*it)->object().node();
+        QSharedPointer<core::IBlogObject> obj;
+
+        switch(scriboObject)
+        {
+          case SCRIBO_COMMENT:
+            obj = QSharedPointer<core::IBlogObject> (new core::CComment());
+            obj->parentId()->setSsId(parentId);
+            break;
+          case SCRIBO_POST:
+            obj = QSharedPointer<core::IBlogObject> (new core::CPost());
+            break;
+          default:
+            break;
+        }
+
+        obj->id()->setSsId(id);
+
+        m_blogObjects.insert(id, obj);
+
+        queryList.push_back(createDefaultTriple(id, TITLE, ANY));
+        queryList.push_back(createDefaultTriple(id, TEXT, ANY));
+      }
+
+      disconnect(query.data(), SIGNAL(finished(int)), this, SLOT(processBlogObjectsList(int)));
+      connect(query.data(), SIGNAL(finished(int)), this, SLOT(processBlogObjects(int)));
+
+      m_queryQueue.enqueue(qMakePair(queryName,queryList));
+      QTimer::singleShot(1,this, SLOT(scriboQuery()));
+    }
+  }
+
+  void CScriboHandler::scriboQuery()
+  {
+    QPair<QString, QList<Triple*> > pair = m_queryQueue.dequeue();
+
+    QSharedPointer<TemplateQuery> query = getQuery(pair.first);
+    QList<Triple*> triples = pair.second;
+    query->query(triples);
+
+    while(triples.count())
+      delete triples.takeFirst();
+  }
+
+  void CScriboHandler::processBlogObjects(int success)
+  {
+    qDebug() << "processBlogObjects";
+
+    QString queryName = sender()->objectName();
+    QSharedPointer<TemplateQuery> query = getQuery(queryName);
+    QString id;
+
+    if(!query.isNull() && (success == 0))
+    {
+      QList<Triple *> results = query->results();
+
+      ScriboObject scriboObject = defineScriboObject(queryName, id);
+      QSet<QString> readyBlogObjects;
+
+      for(QList<Triple *>::iterator it = results.begin(); it != results.end(); ++it)
+      {
+        QString id = (*it)->subject().node();
+        readyBlogObjects.insert(id);
+
+        void (core::IBlogObject::*function)(QString) = PREDICATES[(*it)->predicate().node()];
+        (m_blogObjects[id].data()->*function)((*it)->object().node());
+      }
+
+      switch(scriboObject)
+      {
         case SCRIBO_COMMENT:
-          obj = new core::CComment(id);
+          emitCommentSignal(readyBlogObjects);
           break;
         case SCRIBO_POST:
-          obj = new core::CPost(id);
+          emitPostSignal(readyBlogObjects);
           break;
         default:
           break;
       }
 
-      m_blogObjects.insert(id, obj);
-
-      m_queryList.push_back(createDefaultTriple(id, TITLE, ANY));
-      m_queryList.push_back(createDefaultTriple(id, TEXT, ANY));
+      deleteQuery(queryName);
     }
-
-    m_postProcessor = &CScriboHandler::processBlogObjects;
   }
 
-  void CScriboHandler::processBlogObjects(QList<Triple *> triple)
+  ScriboObject CScriboHandler::defineScriboObject(QString name, QString& id)
   {
-    qDebug() << "processBlogObjects";
+    if(name.contains(LOAD_POSTS))
+      return SCRIBO_POST;
 
-    m_queryList.clear();
+    id = name.mid(LOAD_COMMENTS.length(), name.length());
 
-    for(QList<Triple *>::iterator it = triple.begin(); it != triple.end(); ++it)
-    {
-      QString id = (*it)->subject().node();
-
-      void (core::IBlogObject::*function)(QString) = PREDICATES[(*it)->predicate().node()];
-      (m_blogObjects[id]->*function)((*it)->object().node());
-    }
-
-    switch (m_scriboObject) {
-      case SCRIBO_COMMENT:
-        emitCommentSignal();
-        break;
-      case SCRIBO_POST:
-        emitPostSignal();
-        break;
-      default:
-        break;
-    }
-
-    m_postProcessor = NULL;
+    return SCRIBO_COMMENT;
   }
 
-  void CScriboHandler::emitPostSignal()
+  void CScriboHandler::emitPostSignal(QSet<QString> readyBlogObjects)
   {
-    QSet<core::CPost> posts;
+    QList<QSharedPointer<core::CPost> > posts;
 
-    for(QMap<QString, core::IBlogObject*>::const_iterator it = m_blogObjects.begin(); it != m_blogObjects.end(); ++it)
+    for(QSet<QString>::const_iterator it = readyBlogObjects.begin(); it != readyBlogObjects.end(); ++it)
     {
       QString s;
       QTextStream os(&s);
-      os << *it.value();
+      os << *m_blogObjects[*it];
       qDebug() << s;
 
-      posts.insert(*qobject_cast<core::CPost*>(it.value()));
-    }
+      posts.push_back(m_blogObjects.value(*it).dynamicCast<core::CPost> ());
 
+      if (m_blogObjects.contains(*it))
+        m_blogObjects.remove(*it);
+    }
     emit loadPostsDone(posts);
   }
 
-  void CScriboHandler::emitCommentSignal()
+  void CScriboHandler::emitCommentSignal(QSet<QString> readyBlogObjects)
   {
-    QSet<core::CComment> comments;
+    QList<QSharedPointer<core::CComment> > comments;
 
-    for(QMap<QString, core::IBlogObject*>::const_iterator it = m_blogObjects.begin(); it != m_blogObjects.end(); ++it)
+    for(QSet<QString>::const_iterator it = readyBlogObjects.begin(); it != readyBlogObjects.end(); ++it)
     {
       QString s;
       QTextStream os(&s);
-      os << *it.value();
+      os << *m_blogObjects[*it];
       qDebug() << s;
 
-      comments.insert(*qobject_cast<core::CComment*>(it.value()));
+      comments.push_back(m_blogObjects.value(*it).dynamicCast<core::CComment> ());
+      m_blogObjects.remove(*it);
     }
 
     emit loadCommentsDone(comments);
   }
+
+  void CScriboHandler::sendPosts(QList<core::CPost> posts)
+  {
+    foreach(core::CPost post, posts)
+        insert(post.triplets());
+  }
+
+  void CScriboHandler::sendBlogObject(QSharedPointer<core::IBlogObject> object)
+  {
+    insert(object->triplets());
+  }
+
+  void CScriboHandler::sendBlogObjects(QList<QSharedPointer<core::IBlogObject> > objects)
+  {
+    foreach (QSharedPointer<core::IBlogObject> object, objects)
+        sendBlogObject(object);
+  }
+
+  void CScriboHandler::subscribeRefreshComments()
+  {
+    QSharedPointer<TemplateSubscription> subscription = creatreSubscription("refreshComments");
+
+    connect(subscription.data(), SIGNAL(indication()), this, SLOT(refreshCommentsRequest()) );
+
+    Triple *triple = createDefaultTriple(BLOG_SERVICE_NAME, "refreshComments", ACCOUNT_NAME);
+
+    QList<Triple *> list;
+    list.append(triple);
+
+    subscription->subscribe(list);
+
+    while(list.count())
+      delete list.takeFirst();
+  }
+
+  void CScriboHandler::refreshPostsRequest()
+  {
+    QSharedPointer<TemplateSubscription> subscription = getSubscription(sender()->objectName());
+
+    if(!subscription.isNull())
+    {
+      // получить данные для ответа об успехе синхронизации
+
+      remove(subscription->results());
+
+      emit refreshComments();
+    }
+  }
+
+  void CScriboHandler::refreshCommentsRequest()
+  {
+    qDebug() << "CScriboHandler::refreshCommentsRequest";
+
+    QSharedPointer<TemplateSubscription> subscription = getSubscription(sender()->objectName());
+
+    if(!subscription.isNull())
+    {
+      // получить данные для ответа об успехе синхронизации
+
+      remove(subscription->results());
+
+      emit refreshComments();
+    }
+  }
+
 } // namespace smartspace
 
 /* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/smartspace/src/ScriboHandler.cpp $ ]=== */

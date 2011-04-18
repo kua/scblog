@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: ResponseParser.h 53 2011-04-07 13:11:18Z kua $ */
+/* $Id: ResponseParser.h 59 2011-04-18 14:14:17Z kua $ */
 /*!
  * \file ResponseParser.h
  * \brief Header of CResponseParser
@@ -47,6 +47,8 @@
 #include <QDomDocument>
 #include <QUrl>
 #include <QSet>
+#include <QMap>
+#include <QSharedPointer>
 #include "Post.h"
 #include "Comment.h"
 
@@ -59,7 +61,11 @@ namespace BlogService
     SUBJECT,
     URL,
     COMMENTS,
-    BODY
+    BODY,
+    ID,
+    POST_DATE,
+    COMMENT_DATE,
+    CHILD_COMMENT
   };
 
   /*!
@@ -68,28 +74,34 @@ namespace BlogService
    */
   class CResponseParser: public QObject
   {
-    Q_OBJECT
+  Q_OBJECT
 
     QMap<QString, NAMES> MEMBERS_NAMES;
 
     QDomDocument m_document;
 
     QString parseValue(QDomNode valueNode);
-    QString parseUrl(QUrl url);
 
   public:
-    CResponseParser(QString response);
+    CResponseParser(QString& response);
 
     template<class Element>
-    QList<Element> parseElements()
+    QList<QSharedPointer<Element> > parseElements()
     {
-      QList<Element> elements;
-      Element element;
-
       QDomElement root = m_document.documentElement();
       QDomNode node = root.firstChild();
 
+      return parseElements<Element>(node);
+    }
+
+    template<class Element>
+    QList<QSharedPointer<Element> > parseElements(QDomNode node)
+    {
+      QList<QSharedPointer<Element> > elements;
+      QSharedPointer<Element> element = QSharedPointer<Element> (new Element);
+
       QDomNode eventsSeparator;
+      QString id;
 
       while(!node.isNull())
       {
@@ -114,19 +126,34 @@ namespace BlogService
                   break;
                 case BODY:
                 case EVENT:
-                  element.setText(parseValue(value));
-
+                  element->setText(parseValue(value));
+                  break;
+                case SUBJECT:
+                  element->setTitle(parseValue(value));
+                  break;
+                case URL:
+                  element->id()->setLjId(parseUrl(QUrl(parseValue(value))));
+                  break;
+                case ID:
+                  id = parseValue(value);
+                  element->id()->setLjId(id);
+                  break;
+                case POST_DATE:
+                case COMMENT_DATE:
                   elements.push_back(element);
-                  element = Element();
+                  element = QSharedPointer<Element> (new Element);
                   node = eventsSeparator;
                   eventsSeparator = eventsSeparator.nextSibling();
                   break;
-                case SUBJECT:
-                  element.setTitle(parseValue(value));
-                  break;
-                case URL:
-                  element.setDitemId(parseUrl(QUrl(parseValue(value))));
-                  break;
+                case CHILD_COMMENT:
+                 {
+                  QList<QSharedPointer<Element> > childElements = parseElements<Element>(value);
+                  foreach(QSharedPointer<Element> childElement, childElements)
+                    if (!childElement->parentId()->isLjIdSet())
+                      childElement->parentId()->setLjId(id);
+                  elements.append(childElements);
+                 }
+                 break;
                 default:
                   break;
               }
@@ -136,12 +163,12 @@ namespace BlogService
         else
           node = node.firstChild();
       }
-
       return elements;
     }
     ;
 
     QString parameter(QString parameter);
+    static QString parseUrl(QUrl url);
 
   }; // class CResponseParser
 

@@ -30,10 +30,10 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: Post.cpp 59 2011-04-18 14:14:17Z kua $ 
+ * $Id: LjManager.cpp 59 2011-04-18 14:14:17Z kua $ 
  *
- * \file Post.cpp
- * \brief Post implementation
+ * \file LjManager.cpp
+ * \brief CLjManager implementation
  *
  * File description
  *
@@ -41,70 +41,71 @@
  * ---------------------------------------------------------------- */
 
 #include <QDebug>
-#include "Post.h"
-#include "SSHandler.h"
-#include "Ontology.h"
+#include "LjManager.h"
 
-namespace core
+namespace BlogService
 {
-  CPost::CPost(const CPost& obj):IBlogObject()
-  {
-    *this = obj;
-  }
-
-  CPost::CPost():IBlogObject()
+  CLjManager::CLjManager(QObject *parent) :
+    QObject(parent)
   {
   }
 
-  CPost::CPost(QString title, QString text):IBlogObject(title,text)
+  void CLjManager::setHandler(QSharedPointer<CLjHandler> handler)
   {
+    m_ljHandler = handler;
+    connect(m_ljHandler.data(), SIGNAL(transactionDone()), this, SLOT(performTask()));
   }
 
-  CPost& CPost::operator=(const CPost& obj)
+  void CLjManager::performTask()
   {
-    qobject_cast<IBlogObject*>(this)->operator=(obj);
 
-    return *this;
+    if (m_ljHandler->isReady() && !m_taskQueue.isEmpty())
+    {
+      qDebug() << "m_taskQueue.size()" << m_taskQueue.size();
+
+      void (BlogService::CLjHandler::*function)() = m_taskQueue.dequeue();
+      qDebug() << "m_taskQueue.size()" << m_taskQueue.size();
+      (m_ljHandler.data()->*function)();
+    }
   }
 
-  bool CPost::operator==(const CPost& obj) const
+  void CLjManager::login()
   {
-    return (title() == obj.title());
+    m_taskQueue.enqueue(&BlogService::CLjHandler::login);
+
+    performTask();
   }
 
-  QSharedPointer<CId> CPost::parentId()
+  void CLjManager::loadComments(QSharedPointer<core::CPost> post)
   {
-    return QSharedPointer<CId> (new CId());
+    m_ljHandler->addPostToInputBuffer(post);
+    m_taskQueue.enqueue(&BlogService::CLjHandler::loadComments);
+
+    performTask();
   }
 
-  void CPost::generateSsId()
+  void CLjManager::loadPosts()
   {
-    id()->setSsId(QString("post-" + generateId()));
+    m_taskQueue.enqueue(&BlogService::CLjHandler::loadPosts);
+
+    performTask();
   }
 
-  QList<Triple *> CPost::triplets() const
+  void CLjManager::sendPost(QSharedPointer<core::CPost> post)
   {
-    QList<Triple *> triplets;
+    m_ljHandler->addPostToOutputBuffer(post);
+    m_taskQueue.enqueue(&BlogService::CLjHandler::sendPost);
 
-    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(SmartSpace::ACCOUNT_NAME, SmartSpace::HAS_POST, id()->ssId()));
-    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TYPE, SmartSpace::POST));
-    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TITLE, title()));
-    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TEXT, text()));
-
-    return triplets;
+    performTask();
   }
 
-  QTextStream& operator<<(QTextStream& os, const CPost& post)
+  void CLjManager::sendComment(QSharedPointer<core::CComment> comment)
   {
-    os.setCodec("UTF-8");
+    m_ljHandler->addCommentToOutputBuffer(comment);
+    m_taskQueue.enqueue(&BlogService::CLjHandler::sendComment);
 
-    os << "Id: " << post.id()->ssId() << "; ";
-    os << "Title: " << post.title() << "; ";
-    os << "Text: " << post.text() << "; ";
-    os << "ditemid: " << post.id()->ljId() << "; ";
-
-    return os;
+    performTask();
   }
-} // namespace core
+} // namespace BlogService
 
-/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/core/src/Post.cpp $ ]=== */
+/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/blogservice/src/LjManager.cpp $ ]=== */

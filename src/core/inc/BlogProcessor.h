@@ -29,10 +29,10 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: Comment.h 59 2011-04-18 14:14:17Z kua $ */
+/* $Id: BlogProcessor.h 59 2011-04-18 14:14:17Z kua $ */
 /*!
- * \file Comment.h
- * \brief Header of CComment
+ * \file BlogProcessor.h
+ * \brief Header of CBlogProcessor
  * \todo add comment here
  *
  * File description
@@ -40,51 +40,62 @@
  * PROJ: OSLL/scblog
  * ---------------------------------------------------------------- */
 
-#ifndef _Comment_H_31BEB193_A0F6_4E28_BABF_C9FC82CD3415_INCLUDED_
-#define _Comment_H_31BEB193_A0F6_4E28_BABF_C9FC82CD3415_INCLUDED_
+#ifndef _BlogProcessor_H_6C2A1FA7_62E3_4C80_A293_D3F9910D483E_INCLUDED_
+#define _BlogProcessor_H_6C2A1FA7_62E3_4C80_A293_D3F9910D483E_INCLUDED_
 
-#include <QSharedPointer>
-#include "BlogObject.h"
+#include <QObject>
+#include "LjManager.h"
+#include "ScriboHandler.h"
+#include "ConferenceHandler.h"
+#include "Post.h"
 
 namespace core
 {
- /*!
+  #define BIT(a) (1 << (a))
+
+  enum BloggingObjects{
+     REPORTS,
+     LJ_POSTS,
+     SCRIBO_POSTS
+  };
+
+  /*!
    * Class description. May use HTML formatting
    *
    */
-  class CComment:
-    public IBlogObject
+  class CBlogProcessor: public QObject
   {
     Q_OBJECT
 
-    QSharedPointer<CId> m_parentId;
+    BlogService::CLjManager* m_ljManager;
+    SmartSpace::CConferenceHandler* m_conferenceHandler;
+    SmartSpace::CScriboHandler* m_scriboHandler;
+
+    QMap<CId, QSharedPointer<IBlogObject> > m_blogObjects;
+    QList<CId> m_postIds;
+
+    bool setParent(QSharedPointer<CComment> comment, bool copyPostId);
+    void saveCommentToSs(QSharedPointer<CComment> comment);
+    void saveCommentToLj(QSharedPointer<CComment> comment);
+
+  private slots:
+
+    void reciveReports(QList<QSharedPointer<core::CReport> >);
+    void reciveLjComments(QList<QSharedPointer<core::CComment> >);
+    void reciveSsPosts(QList<QSharedPointer<core::CPost> >);
+    void reciveSsComments(QList<QSharedPointer<core::CComment> >comment);
+    void refreshComments();
+    void storePost(core::CId id, QSharedPointer<core::CPost> post);
+    void storeComment(core::CId id, QSharedPointer<core::CComment> comment);
 
   public:
-    CComment();
-    CComment(QString title, QString text);
-    CComment(const CComment& obj);
+    CBlogProcessor();
+    ~CBlogProcessor(){};
     
-    ~CComment() {};
-    CComment& operator=(const CComment& obj);
-    bool operator==(const CComment& obj) const;
-
-    void setParentId(QSharedPointer<CId> id);
-
-    virtual QSharedPointer<CId> parentId();
-    QSharedPointer<CId> parentId() const;
-
-    virtual void generateSsId();
-    virtual QList<Triple *> triplets() const;
-
-    friend QTextStream& operator<< (QTextStream& os, const CComment& comment);
-  }; // class CComment
+    void init();
+  }; // class CBlogProcessor
 } // namespace core
 
-inline uint qHash(const core::CComment& comment)
-{
-   return qHash(comment.title());
-}
+#endif //_BlogProcessor_H_6C2A1FA7_62E3_4C80_A293_D3F9910D483E_INCLUDED_
 
-#endif //_Comment_H_31BEB193_A0F6_4E28_BABF_C9FC82CD3415_INCLUDED_
-
-/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/core/inc/Comment.h $ ]=== */
+/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/core/inc/BlogProcessor.h $ ]=== */

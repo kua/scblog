@@ -30,10 +30,10 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: Post.cpp 59 2011-04-18 14:14:17Z kua $ 
+ * $Id: Id.cpp 59 2011-04-18 14:14:17Z kua $ 
  *
- * \file Post.cpp
- * \brief Post implementation
+ * \file Id.cpp
+ * \brief CId implementation
  *
  * File description
  *
@@ -41,70 +41,73 @@
  * ---------------------------------------------------------------- */
 
 #include <QDebug>
-#include "Post.h"
-#include "SSHandler.h"
-#include "Ontology.h"
+#include "Id.h"
 
 namespace core
 {
-  CPost::CPost(const CPost& obj):IBlogObject()
-  {
-    *this = obj;
-  }
-
-  CPost::CPost():IBlogObject()
+  CId::CId()
   {
   }
 
-  CPost::CPost(QString title, QString text):IBlogObject(title,text)
+  CId::CId(QString& ssId, QString& ljId) :
+    m_ssId(ssId), m_ljId(ljId)
   {
   }
 
-  CPost& CPost::operator=(const CPost& obj)
+  CId::CId(const CId& obj) :
+    QObject(), m_ssId(obj.ssId()), m_ljId(obj.ljId())
   {
-    qobject_cast<IBlogObject*>(this)->operator=(obj);
+  }
+
+  CId& CId::operator=(const CId& obj)
+  {
+    m_ssId = obj.ssId();
+    m_ljId = obj.ljId();
 
     return *this;
   }
 
-  bool CPost::operator==(const CPost& obj) const
+  bool CId::operator==(const CId& obj)
   {
-    return (title() == obj.title());
+    return ((!ssId().isEmpty() && (ssId() == obj.ssId()))
+        || ( !ljId().isEmpty() && (ljId() == obj.ljId())));
   }
 
-  QSharedPointer<CId> CPost::parentId()
+  void CId::setLjId(QString ljId)
   {
-    return QSharedPointer<CId> (new CId());
+    m_ljId = ljId;
   }
 
-  void CPost::generateSsId()
+  void CId::setSsId(QString ssId)
   {
-    id()->setSsId(QString("post-" + generateId()));
+    m_ssId = ssId;
   }
 
-  QList<Triple *> CPost::triplets() const
+  QString CId::ssId() const
   {
-    QList<Triple *> triplets;
-
-    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(SmartSpace::ACCOUNT_NAME, SmartSpace::HAS_POST, id()->ssId()));
-    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TYPE, SmartSpace::POST));
-    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TITLE, title()));
-    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TEXT, text()));
-
-    return triplets;
+    return m_ssId;
   }
 
-  QTextStream& operator<<(QTextStream& os, const CPost& post)
+  QString CId::ljId() const
   {
-    os.setCodec("UTF-8");
-
-    os << "Id: " << post.id()->ssId() << "; ";
-    os << "Title: " << post.title() << "; ";
-    os << "Text: " << post.text() << "; ";
-    os << "ditemid: " << post.id()->ljId() << "; ";
-
-    return os;
+    return m_ljId;
   }
+
+  bool CId::isLjIdSet() const
+  {
+    return (!m_ljId.isEmpty());
+  }
+
+  bool CId::isSsIdSet() const
+  {
+    return (!m_ssId.isEmpty());
+  }
+
+  bool CId::isComlete() const
+  {
+    return (isLjIdSet() && isSsIdSet());
+  }
+
 } // namespace core
 
-/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/core/src/Post.cpp $ ]=== */
+/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/core/src/Id.cpp $ ]=== */

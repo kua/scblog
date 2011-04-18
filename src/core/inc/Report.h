@@ -29,10 +29,10 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: Comment.h 59 2011-04-18 14:14:17Z kua $ */
+/* $Id: Report.h 59 2011-04-18 14:14:17Z kua $ */
 /*!
- * \file Comment.h
- * \brief Header of CComment
+ * \file Report.h
+ * \brief Header of CReport
  * \todo add comment here
  *
  * File description
@@ -40,11 +40,12 @@
  * PROJ: OSLL/scblog
  * ---------------------------------------------------------------- */
 
-#ifndef _Comment_H_31BEB193_A0F6_4E28_BABF_C9FC82CD3415_INCLUDED_
-#define _Comment_H_31BEB193_A0F6_4E28_BABF_C9FC82CD3415_INCLUDED_
+#ifndef _Report_H_3C856C8E_327F_4BE5_AF99_C2166BE3519E_INCLUDED_
+#define _Report_H_3C856C8E_327F_4BE5_AF99_C2166BE3519E_INCLUDED_
 
-#include <QSharedPointer>
-#include "BlogObject.h"
+#include <QMap>
+#include <QString>
+#include "Post.h"
 
 namespace core
 {
@@ -52,39 +53,51 @@ namespace core
    * Class description. May use HTML formatting
    *
    */
-  class CComment:
-    public IBlogObject
+  class CReport:
+    public CPost
   {
     Q_OBJECT
 
-    QSharedPointer<CId> m_parentId;
+    QString m_userId;
+    QString m_presentationId;
+    QString m_timeSlot;
+
+    QMap<QString, QString> m_userData;
+    QMap<QString, QString> m_presentationData;
+
+    void generateTitle();
+    void generateText();
 
   public:
-    CComment();
-    CComment(QString title, QString text);
-    CComment(const CComment& obj);
-    
-    ~CComment() {};
-    CComment& operator=(const CComment& obj);
-    bool operator==(const CComment& obj) const;
 
-    void setParentId(QSharedPointer<CId> id);
+    CReport();
+    CReport(const CReport& obj);
+    ~CReport(){}
+    CReport& operator=(const CReport& obj);
+    bool operator==(const CReport& obj) const;
 
-    virtual QSharedPointer<CId> parentId();
-    QSharedPointer<CId> parentId() const;
+    void setUserId(QString& userId);
+    void setPresentationId(QString presentationId);
 
-    virtual void generateSsId();
-    virtual QList<Triple *> triplets() const;
+    void putUserData(QString key, QString value);
+    void putPresentationData(QString key, QString value);
 
-    friend QTextStream& operator<< (QTextStream& os, const CComment& comment);
-  }; // class CComment
+    void setTimeSlot(QString timeSlot);
+
+    QMap<QString, QString> userData() const;
+    QMap<QString, QString> presentationData() const;
+
+    void generatePostData();
+
+    QString userId() const;
+    QString presentationId() const;
+    QString timeSlot() const;
+
+    friend QTextStream& operator<<(QTextStream& os, const CReport& post);
+  }; // class CReport
+  
 } // namespace core
 
-inline uint qHash(const core::CComment& comment)
-{
-   return qHash(comment.title());
-}
+#endif //_Report_H_3C856C8E_327F_4BE5_AF99_C2166BE3519E_INCLUDED_
 
-#endif //_Comment_H_31BEB193_A0F6_4E28_BABF_C9FC82CD3415_INCLUDED_
-
-/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/core/inc/Comment.h $ ]=== */
+/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/core/inc/Report.h $ ]=== */

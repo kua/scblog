@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: ResponseParser.cpp 50 2011-04-03 13:01:31Z kua $ 
+ * $Id: ResponseParser.cpp 59 2011-04-18 14:14:17Z kua $ 
  *
  * \file ResponseParser.cpp
  * \brief CResponseParser implementation
@@ -47,7 +47,7 @@
 namespace BlogService
 {
 
-  CResponseParser::CResponseParser(QString response)
+  CResponseParser::CResponseParser(QString& response)
   {
     m_document.setContent(response); //! обработать false
 
@@ -57,6 +57,10 @@ namespace BlogService
     MEMBERS_NAMES.insert(QString("url"), BlogService::URL);
     MEMBERS_NAMES.insert(QString("comments"), BlogService::COMMENTS);
     MEMBERS_NAMES.insert(QString("body"), BlogService::BODY);
+    MEMBERS_NAMES.insert(QString("dtalkid"), BlogService::ID);
+    MEMBERS_NAMES.insert(QString("eventtime"), BlogService::POST_DATE);
+    MEMBERS_NAMES.insert(QString("datepost"), BlogService::COMMENT_DATE);
+    MEMBERS_NAMES.insert(QString("children"), BlogService::CHILD_COMMENT);
   }
 
   QString CResponseParser::parseValue(QDomNode valueNode)

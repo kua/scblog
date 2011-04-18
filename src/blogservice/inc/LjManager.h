@@ -29,62 +29,57 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: Comment.h 59 2011-04-18 14:14:17Z kua $ */
+/* $Id: LjManager.h 59 2011-04-18 14:14:17Z kua $ */
 /*!
- * \file Comment.h
- * \brief Header of CComment
+ * \file LjManager.h
+ * \brief Header of CLjManager
  * \todo add comment here
+ * \fixme move to separate thread
  *
  * File description
  *
  * PROJ: OSLL/scblog
  * ---------------------------------------------------------------- */
 
-#ifndef _Comment_H_31BEB193_A0F6_4E28_BABF_C9FC82CD3415_INCLUDED_
-#define _Comment_H_31BEB193_A0F6_4E28_BABF_C9FC82CD3415_INCLUDED_
+#ifndef _LjManager_H_C9B3F09C_021C_4531_BD07_7517F3CDC30B_INCLUDED_
+#define _LjManager_H_C9B3F09C_021C_4531_BD07_7517F3CDC30B_INCLUDED_
 
 #include <QSharedPointer>
-#include "BlogObject.h"
+#include "LjHandler.h"
+#include "Post.h"
+#include "Comment.h"
 
-namespace core
+namespace BlogService
 {
- /*!
+  /*!
    * Class description. May use HTML formatting
    *
    */
-  class CComment:
-    public IBlogObject
+  class CLjManager: public QObject
   {
     Q_OBJECT
 
-    QSharedPointer<CId> m_parentId;
+    QQueue<void(BlogService::CLjHandler::*)()> m_taskQueue;
+
+    QSharedPointer<CLjHandler> m_ljHandler;
+
+  private slots:
+    void performTask();
 
   public:
-    CComment();
-    CComment(QString title, QString text);
-    CComment(const CComment& obj);
-    
-    ~CComment() {};
-    CComment& operator=(const CComment& obj);
-    bool operator==(const CComment& obj) const;
+    CLjManager(QObject *parent = 0);
 
-    void setParentId(QSharedPointer<CId> id);
+    void login();
+    void loadComments(QSharedPointer<core::CPost> post);
+    void loadPosts();
+    void sendPost(QSharedPointer<core::CPost> post);
+    void sendComment(QSharedPointer<core::CComment> comment);
 
-    virtual QSharedPointer<CId> parentId();
-    QSharedPointer<CId> parentId() const;
+    void setHandler(QSharedPointer<CLjHandler> handler);
 
-    virtual void generateSsId();
-    virtual QList<Triple *> triplets() const;
+  }; // class CLjManager
 
-    friend QTextStream& operator<< (QTextStream& os, const CComment& comment);
-  }; // class CComment
-} // namespace core
+} // namespace BlogService
 
-inline uint qHash(const core::CComment& comment)
-{
-   return qHash(comment.title());
-}
-
-#endif //_Comment_H_31BEB193_A0F6_4E28_BABF_C9FC82CD3415_INCLUDED_
-
-/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/core/inc/Comment.h $ ]=== */
+#endif //_LjManager_H_C9B3F09C_021C_4531_BD07_7517F3CDC30B_INCLUDED_
+/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/blogservice/inc/LjManager.h $ ]=== */
