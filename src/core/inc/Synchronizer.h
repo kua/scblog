@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: Synchronizer.h 53 2011-04-07 13:11:18Z kua $ */
+/* $Id: Synchronizer.h 59 2011-04-18 14:14:17Z kua $ */
 /*!
  * \file Synchronizer.h
  * \brief Header of CSynchronizer
@@ -44,54 +44,13 @@
 #define _Synchronizer_H_5AC44AE3_757B_431A_8A36_B36F5C58AC23_INCLUDED_
 
 #include <QObject>
-#include "LjHandler.h"
+#include "LjManager.h"
 #include "ScriboHandler.h"
 #include "ConferenceHandler.h"
 #include "Post.h"
 
 namespace core
 {
-  #define BIT(a) (1 << (a))
-
-  enum BloggingObjects{
-     REPORTS,
-     LJ_POSTS,
-     SCRIBO_POSTS
-  };
-
-  /*!
-   * Class description. May use HTML formatting
-   *
-   */
-  class CSynchronizer: public QObject
-  {
-    Q_OBJECT
-
-    BlogService::CLjHandler* m_ljHandler;
-    SmartSpace::CConferenceHandler* m_conferenceHandler;
-    SmartSpace::CScriboHandler* m_scriboHandler;
-
-    int m_loadingFlags;
-
-    QSet<CPost> m_reports;
-    QSet<CPost> m_ljPosts;
-    QSet<CPost> m_ssPosts;
-
-    void synchronizePosts();
-
-  private slots:
-
-    void reciveReports(QSet<core::CPost>);
-    void reciveLjPosts(QSet<core::CPost>);
-    void reciveSsPosts(QSet<core::CPost>);
-
-  public:
-    CSynchronizer();
-    ~CSynchronizer(){};
-    
-    void requestPostSynchronization();
-
-  }; // class CSynchronizer
 
 } // namespace core
 

@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: ConferenceHandler.h 58 2011-04-16 19:11:21Z kua $ */
+/* $Id: ConferenceHandler.h 60 2011-04-21 16:42:47Z kua $ */
 /*!
  * \file ConferenceHandler.h
  * \brief Header of CConferenceHandler
@@ -58,16 +58,30 @@ namespace SmartSpace
     Q_OBJECT
 
     QMap<QString, QSharedPointer<core::CReport> > m_posts;
+
     QMap<QString, QString> m_presentationsCache;
+    QSet<QString> m_reports;
+    QSet<QString> m_reportsBuffer;
     void (CConferenceHandler::*m_postProcessor)(QList<Triple*> );
 
     virtual void postProcess(QList<Triple *> triples);
+    bool isReady();
 
     void processTimeSlots(QList<Triple *> triple);
     void processUserProfile(QList<Triple *> triple);
     void processPresentation(QList<Triple *> triple);
+    void recieveReports(QList<Triple *> triple);
+
+    void subscribeToScheduleChanges();
+
+  private slots:
+    void refreshReportsRequest();
+    void checkExistingReports();
+    void checkReportsBuffer();
 
   signals:
+    void transactionDone();
+
     void loadReportsDone(QList<QSharedPointer<core::CReport> > posts);
 
   public:

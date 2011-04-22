@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: ConferenceHandler.cpp 58 2011-04-16 19:11:21Z kua $ 
+ * $Id: ConferenceHandler.cpp 60 2011-04-21 16:42:47Z kua $ 
  *
  * \file ConferenceHandler.cpp
  * \brief CConferenceHandler implementation
@@ -50,34 +50,116 @@ namespace SmartSpace
   CConferenceHandler::CConferenceHandler(QString sibUri, QObject *parent) :
     CSSHandler(sibUri, parent)
   {
+    connect(this,SIGNAL(transactionDone()),this,SLOT(checkReportsBuffer()));
+
+    m_postProcessor = NULL;
+    subscribeToScheduleChanges();
+  }
+
+  void CConferenceHandler::subscribeToScheduleChanges()
+  {
+    QSharedPointer<TemplateSubscription> subscription = creatreSubscription("scheduleChanges");
+
+    connect(subscription.data(), SIGNAL(indication()), this, SLOT(refreshReportsRequest()) );
+
+    QList<Triple *> list = createTripleList(createDefaultTriple(ANY, HAS_USER, ANY));
+    subscription->subscribe(list);
+
+    while(list.count())
+      delete list.takeFirst();
+  }
+
+  void CConferenceHandler::refreshReportsRequest()
+  {
+    QSharedPointer<TemplateSubscription> subscription = getSubscription(sender()->objectName());
+
+    if(!subscription.isNull())
+    {
+      QList<Triple *> results = subscription->results();
+      QSet<QString> reports;
+      QList<Triple *>::iterator it;
+
+      for(it = results.begin(); it != results.end(); ++it)
+      {
+        reports.insert((*it)->object().node());
+
+        qDebug() << (*it)->subject().node();
+        qDebug() << (*it)->predicate().node();
+        qDebug() << (*it)->object().node();
+      }
+
+      if (isReady())
+      {
+        m_reports = reports;
+        QTimer::singleShot(1,this,SLOT(checkExistingReports()));
+      }
+      else
+        m_reportsBuffer += reports;
+    }
+  }
+
+  void CConferenceHandler::checkReportsBuffer()
+  {
+    if (!m_reportsBuffer.isEmpty())
+    {
+      m_reports = m_reportsBuffer;
+      m_reportsBuffer.clear();
+
+      checkExistingReports();
+    }
+  }
+
+  void CConferenceHandler::checkExistingReports()
+  {
+    qDebug() << "checkExistingReports";
+
+    m_queryList.clear();
+    m_queryList.append(createDefaultTriple(ANY, DESCRIBE, ANY));
+
+    m_postProcessor = &CConferenceHandler::recieveReports;
+    QTimer::singleShot(1, this, SLOT(query()));
+  }
+
+  void CConferenceHandler::recieveReports(QList<Triple *> triples)
+  {
+    qDebug() << "recieveReports";
+
+    QSet<QString> userIds;
+
+    for(QList<Triple *>::iterator it = triples.begin(); it != triples.end(); ++it)
+      userIds.insert((*it)->object().node());
+
+    m_reports.subtract(userIds);
+
+    if (m_reports.isEmpty())
+    {
+      m_postProcessor = NULL;
+      emit transactionDone();
+    }
+    else
+      loadReports();
   }
 
   void CConferenceHandler::postProcess(QList<Triple *> triples)
   {
     if(m_postProcessor != NULL)
-    {
       (this->*m_postProcessor)(triples);
+  }
 
-      QTimer::singleShot(10, this, SLOT(query()));
-    }
+  bool CConferenceHandler::isReady()
+  {
+    return m_postProcessor == NULL;
   }
 
   void CConferenceHandler::loadReports()
   {
-    m_postProcessor = &CConferenceHandler::processTimeSlots;
-
-    query(createDefaultTriple(ANY, HAS_USER, ANY));
-  }
-
-  void CConferenceHandler::processTimeSlots(QList<Triple *> triple)
-  {
-    qDebug() << "processTimeSlots";
+    qDebug() << "CConferenceHandler::loadReports";
 
     m_queryList.clear();
 
-    for(QList<Triple *>::iterator it = triple.begin(); it != triple.end(); ++it)
+    for(QSet<QString>::iterator it = m_reports.begin(); it != m_reports.end(); ++it)
     {
-      QString userId = (*it)->object().node();
+      QString userId = *it;
 
       QSharedPointer<core::CReport> post =  QSharedPointer<core::CReport>(new core::CReport());
       post->setUserId(userId);
@@ -91,6 +173,7 @@ namespace SmartSpace
     }
 
     m_postProcessor = &CConferenceHandler::processUserProfile;
+    QTimer::singleShot(1, this, SLOT(query()));
   }
 
   void CConferenceHandler::processUserProfile(QList<Triple *> triple)
@@ -117,6 +200,7 @@ namespace SmartSpace
       m_posts[userId]->putUserData((*it)->predicate().node(), (*it)->object().node());
     }
     m_postProcessor = &CConferenceHandler::processPresentation;
+    QTimer::singleShot(1, this, SLOT(query()));
   }
 
   void CConferenceHandler::processPresentation(QList<Triple *> triple)
@@ -147,8 +231,8 @@ namespace SmartSpace
     m_postProcessor = NULL;
 
     emit loadReportsDone(m_posts.values());
-
     m_posts.clear();///
+    emit transactionDone();
   }
 
 } // namespace smartspace

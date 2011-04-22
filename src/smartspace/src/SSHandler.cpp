@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: SSHandler.cpp 58 2011-04-16 19:11:21Z kua $ 
+ * $Id: SSHandler.cpp 60 2011-04-21 16:42:47Z kua $ 
  *
  * \file SSHandler.cpp
  * \brief CSSHandler implementation
@@ -54,7 +54,6 @@ namespace SmartSpace
   {
     m_node = QSharedPointer<QWhiteBoardNode> (new QWhiteBoardNode);
     join(sibUri);
-
   }
 
   void CSSHandler::join(QString sibUri)
@@ -99,6 +98,14 @@ namespace SmartSpace
                       TripleElement(object, TripleElement::ElementTypeLiteral));
   }
 
+  QList<Triple *>CSSHandler::createTripleList(Triple *triple)
+  {
+    QList<Triple *> list;
+    list.append(triple);
+
+    return list;
+  }
+
   void CSSHandler::query(Triple* triple)
   {
     m_queryList.clear();
@@ -109,7 +116,7 @@ namespace SmartSpace
 
   void CSSHandler::query()
   {
-    QSharedPointer<TemplateQuery> query = QSharedPointer<TemplateQuery>(new TemplateQuery(m_node.data()));
+    QSharedPointer<TemplateQuery> query = QSharedPointer<TemplateQuery> (new TemplateQuery(m_node.data()));
     query->setObjectName("query");
 
     if(!m_queries.contains(query->objectName()))
@@ -147,7 +154,6 @@ namespace SmartSpace
           qDebug() << (*it)->predicate().node();
           qDebug() << (*it)->object().node();
         }
-
         postProcess(results);
 
         m_queries.remove(sender()->objectName());
@@ -160,7 +166,7 @@ namespace SmartSpace
     if(m_subscriptions.contains(name))
       return m_subscriptions[name];
 
-    return QSharedPointer<TemplateSubscription>();
+    return QSharedPointer<TemplateSubscription> ();
   }
 
   QSharedPointer<TemplateQuery> CSSHandler::getQuery(QString name)
@@ -168,12 +174,13 @@ namespace SmartSpace
     if(m_queries.contains(name))
       return m_queries[name];
 
-    return QSharedPointer<TemplateQuery>();
+    return QSharedPointer<TemplateQuery> ();
   }
 
   QSharedPointer<TemplateSubscription> CSSHandler::creatreSubscription(QString name)
   {
-    QSharedPointer<TemplateSubscription> subscription = QSharedPointer<TemplateSubscription>(new TemplateSubscription(m_node.data()));
+    QSharedPointer<TemplateSubscription> subscription =
+        QSharedPointer<TemplateSubscription> (new TemplateSubscription(m_node.data()));
 
     subscription->setObjectName(name);
 
@@ -185,7 +192,7 @@ namespace SmartSpace
 
   QSharedPointer<TemplateQuery> CSSHandler::creatreQuery(QString name)
   {
-    QSharedPointer<TemplateQuery> query = QSharedPointer<TemplateQuery>(new TemplateQuery(m_node.data()));
+    QSharedPointer<TemplateQuery> query = QSharedPointer<TemplateQuery> (new TemplateQuery(m_node.data()));
 
     query->setObjectName(name);
 
@@ -200,6 +207,38 @@ namespace SmartSpace
     if(m_queries.contains(name))
       m_queries.remove(name);
   }
+
+  void CSSHandler::wqlQuery()
+  {
+    QSharedPointer<WqlValuesQuery> q = QSharedPointer<WqlValuesQuery>(new WqlValuesQuery(m_node.data()));
+    q->setObjectName("WQLValuesTestQuery");
+    if(!m_wqlQueries.contains(q->objectName()))
+      m_wqlQueries[q->objectName()] = q;
+
+    connect(q.data(), SIGNAL( finished(int) ), this, SLOT( wqlvaluesquerycb(int) ) );
+
+    TripleElement el("account-sclj", TripleElement::ElementTypeURI);
+    QString guery = "['seq',['inv','foaf_account'],['inv','scribo_personInformation']]";
+
+    q->query(el, guery);
+  }
+
+  void CSSHandler::wqlvaluesquerycb(int result)
+  {
+    qDebug() << "resive" << result;
+
+    if(m_wqlQueries.contains(sender()->objectName()))
+    {
+      QSharedPointer<WqlValuesQuery> q = m_wqlQueries[sender()->objectName()];
+      QList<TripleElement> results = (q)->results();
+      QList<TripleElement>::iterator it;
+      for(it = results.begin(); it != results.end(); ++it)
+      {
+        qDebug() << (*it).node();
+      }
+    }
+  }
+
 } // namespace SmartSpace
 
-/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/smartspace/src/SSHandler.cpp $ ]=== */
+  /* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/smartspace/src/SSHandler.cpp $ ]=== */

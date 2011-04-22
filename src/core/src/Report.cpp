@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: Report.cpp 59 2011-04-18 14:14:17Z kua $ 
+ * $Id: Report.cpp 60 2011-04-21 16:42:47Z kua $ 
  *
  * \file Report.cpp
  * \brief CReport implementation
@@ -43,6 +43,7 @@
 #include <QHashNode>
 #include <QUuid>
 #include <QDebug>
+#include "Ontology.h"
 #include "Post.h"
 #include "SSHandler.h"
 #include "Report.h"
@@ -150,6 +151,14 @@ namespace core
     generateTitle();
     generateText();
     CPost::generateSsId();
+  }
+
+  QList<Triple *> CReport::triplets() const
+  {
+    QList<Triple *> triples = CPost::triplets();
+    triples.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::DESCRIBE, userId()));
+
+    return triples;
   }
 
   QTextStream& operator<<(QTextStream& os, const CReport& post)

@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: Synchronizer.cpp 53 2011-04-07 13:11:18Z kua $ 
+ * $Id: Synchronizer.cpp 59 2011-04-18 14:14:17Z kua $ 
  *
  * \file Synchronizer.cpp
  * \brief CSynchronizer implementation
@@ -41,82 +41,13 @@
  * ---------------------------------------------------------------- */
 
 #include <QDebug>
+#include <QTimer>
 #include <QSet>
 #include "Synchronizer.h"
+#include "Id.h"
 
 namespace core
 {
-  CSynchronizer::CSynchronizer()
-  {
-    m_ljHandler = new BlogService::CLjHandler("http://www.livejournal.com","osll","scblog1861", this);
-    m_conferenceHandler = new SmartSpace::CConferenceHandler("X",this);
-    m_scriboHandler = new SmartSpace::CScriboHandler("X",QString("account-bs"),this);
-
-    m_loadingFlags = 0;
-
-    QObject::connect(m_conferenceHandler, SIGNAL(loadReportsDone(QSet<core::CPost>)), this, SLOT(reciveReports(QSet<core::CPost>)));
-    QObject::connect(m_ljHandler, SIGNAL(loadPostsDone(QSet<core::CPost>)), this, SLOT(reciveLjPosts(QSet<core::CPost>)));
-    QObject::connect(m_scriboHandler, SIGNAL(loadPostsDone(QSet<core::CPost>)), this, SLOT(reciveSsPosts(QSet<core::CPost>)));
-  }
-
-  void CSynchronizer::requestPostSynchronization()
-  {
-    m_conferenceHandler->loadReports();
-    m_ljHandler->loadPosts();
-    m_scriboHandler->loadPosts();
-  }
-
-  void CSynchronizer::reciveReports(QSet<core::CPost> posts)
-  {
-    m_reports = posts;
-
-    m_loadingFlags |= BIT(REPORTS);
-
-    synchronizePosts();
-  }
-
-  void CSynchronizer::reciveLjPosts(QSet<core::CPost> posts)
-  {
-    m_ljPosts = posts;
-
-    m_loadingFlags |= BIT(LJ_POSTS);
-
-    synchronizePosts();
-  }
-
-  void CSynchronizer::reciveSsPosts(QSet<core::CPost> posts)
-  {
-    qDebug() << "recieve Scribo Posts";
-
-    for(QSet<CPost>::const_iterator it = posts.begin(); it != posts.end(); ++it)
-    {
-      QString s;
-
-      QTextStream os(&s);
-      os << *it;
-
-      qDebug() << s;
-    }
-
-    m_ssPosts = posts;
-
-    m_loadingFlags |= BIT(SCRIBO_POSTS);
-
-    synchronizePosts();
-  }
-
-  void CSynchronizer::synchronizePosts()
-  {
-    if (m_loadingFlags & BIT(REPORTS) & BIT(LJ_POSTS) & BIT(SCRIBO_POSTS))
-    {
-      QSet<CPost> postsToLj = m_reports;
-      postsToLj.subtract(m_ljPosts);
-      QSet<CPost> postsToSs = m_reports;
-      postsToSs.subtract(m_ssPosts);
-      //m_ljHandler->sendPosts(postsToLj);
-      //m_scriboHandler->sendPosts(postsToSs);
-    }
-  }
 
 } // namespace core
 

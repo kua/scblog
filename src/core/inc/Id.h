@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: Id.h 59 2011-04-18 14:14:17Z kua $ */
+/* $Id: Id.h 60 2011-04-21 16:42:47Z kua $ */
 /*!
  * \file Id.h
  * \brief Header of CId
@@ -87,7 +87,7 @@ inline bool operator<(const core::CId& first, const core::CId& second)
   if (equals)
     return false;
 
-  return (QString(first.ssId() + first.ljId()) < QString(second.ssId() + second.ljId()));
+  return (QString(first.ljId() + first.ssId()) < QString(second.ljId() + second.ssId()));
 }
 
 #endif //_Id_H_D596BCAC_5880_4100_899C_1967EB9D33B0_INCLUDED_

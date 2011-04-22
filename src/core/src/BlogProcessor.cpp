@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: BlogProcessor.cpp 59 2011-04-18 14:14:17Z kua $ 
+ * $Id: BlogProcessor.cpp 60 2011-04-21 16:42:47Z kua $ 
  *
  * \file BlogProcessor.cpp
  * \brief CBlogProcessor implementation
@@ -87,8 +87,12 @@ namespace core
   void CBlogProcessor::reciveReports(QList<QSharedPointer<core::CReport> > posts)
   {
     foreach (QSharedPointer<core::CReport> object, posts)
+    {
         m_scriboHandler->sendBlogObject(object);
 
+        //if(!m_blogObjects.contains(*object->id()))
+        //  m_ljManager->sendPost(object);
+    }
     m_scriboHandler->loadPosts(SmartSpace::ACCOUNT_NAME);
   }
 
@@ -99,11 +103,13 @@ namespace core
     foreach(QSharedPointer<core::CComment> comment, comments)
         if(!m_blogObjects.contains(*comment->id()))
         {
-          saveCommentToSs(comment);
-          m_blogObjects.insert(*comment->id(), comment);
+          comment->generateSsId();
+          m_toSsList.push_back(comment);
         }
 
-    qDebug() << "Size" <<m_blogObjects.size();
+    saveCommentToSs();
+
+    qDebug() << "Size" << m_blogObjects.size();
     for(QMap<CId, QSharedPointer<IBlogObject> >::const_iterator it = m_blogObjects.begin(); it != m_blogObjects.end(); ++it)
     {
       QString s;
@@ -154,7 +160,9 @@ namespace core
 
   bool CBlogProcessor::setParent(QSharedPointer<CComment> comment, bool copyPostId = false)
   {
-    if (!m_blogObjects.contains(*comment->parentId()))
+    qDebug() << "parentId" << comment->parentId()->ljId() << comment->parentId()->ssId();
+
+    if(!m_blogObjects.contains(*comment->parentId()))
       return false;
 
     QSharedPointer<IBlogObject> parent = m_blogObjects.value(*comment->parentId());
@@ -172,14 +180,28 @@ namespace core
     return false;
   }
 
-  void CBlogProcessor::saveCommentToSs(QSharedPointer<CComment> comment)
+  void CBlogProcessor::saveCommentToSs()
   {
     qDebug() << " CBlogProcessor::saveCommentToSs";
 
-    comment->generateSsId();
+    while(!m_toSsList.isEmpty())
+    {
+      QList<QSharedPointer<CComment> > temp = m_toSsList;
+     
+      for(QList<QSharedPointer<CComment> >::iterator iter = temp.begin(); iter != temp.end(); ++iter)
+        if(setParent(*iter))
+        {
+          m_scriboHandler->sendBlogObject(*iter);
+          m_blogObjects.insert(*(*iter)->id(), *iter);
+          m_toSsList.removeOne(*iter);
 
-    if(setParent(comment))
-      m_scriboHandler->sendBlogObject(comment);
+          QString s;
+
+          QTextStream os(&s);
+          os << **iter;
+          qDebug() << s;
+        }
+    }
   }
 
   void CBlogProcessor::saveCommentToLj(QSharedPointer<CComment> comment)

@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: ScriboHandler.cpp 59 2011-04-18 14:14:17Z kua $ 
+ * $Id: ScriboHandler.cpp 60 2011-04-21 16:42:47Z kua $ 
  *
  * \file ScriboHandler.cpp
  * \brief CScriboHandler implementation
@@ -63,11 +63,7 @@ namespace SmartSpace
   void CScriboHandler::postProcess(QList<Triple *> triples)
   {
     if(m_postProcessor != NULL)
-    {
       (this->*m_postProcessor)(triples);
-
-      QTimer::singleShot(10, this, SLOT(query()));
-    }
   }
 
   void CScriboHandler::createPredicatesHash()
@@ -320,6 +316,7 @@ namespace SmartSpace
       emit refreshComments();
     }
   }
+
 
 } // namespace smartspace
 

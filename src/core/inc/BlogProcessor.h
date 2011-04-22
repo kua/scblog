@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: BlogProcessor.h 59 2011-04-18 14:14:17Z kua $ */
+/* $Id: BlogProcessor.h 60 2011-04-21 16:42:47Z kua $ */
 /*!
  * \file BlogProcessor.h
  * \brief Header of CBlogProcessor
@@ -43,11 +43,13 @@
 #ifndef _BlogProcessor_H_6C2A1FA7_62E3_4C80_A293_D3F9910D483E_INCLUDED_
 #define _BlogProcessor_H_6C2A1FA7_62E3_4C80_A293_D3F9910D483E_INCLUDED_
 
-#include <QObject>
+#include <QList>
+#include <QSharedPointer>
 #include "LjManager.h"
 #include "ScriboHandler.h"
 #include "ConferenceHandler.h"
 #include "Post.h"
+#include "Comment.h"
 
 namespace core
 {
@@ -73,9 +75,10 @@ namespace core
 
     QMap<CId, QSharedPointer<IBlogObject> > m_blogObjects;
     QList<CId> m_postIds;
+    QList<QSharedPointer<CComment> > m_toSsList;
 
     bool setParent(QSharedPointer<CComment> comment, bool copyPostId);
-    void saveCommentToSs(QSharedPointer<CComment> comment);
+    void saveCommentToSs();
     void saveCommentToLj(QSharedPointer<CComment> comment);
 
   private slots:

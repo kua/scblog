@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: SSHandler.h 58 2011-04-16 19:11:21Z kua $ */
+/* $Id: SSHandler.h 60 2011-04-21 16:42:47Z kua $ */
 /*!
  * \file CSSHandler.h
  * \brief Header of CSSHandler
@@ -49,6 +49,8 @@
 #include "q_whiteboard_node.h"
 #include "templatequery.h"
 #include "templatesubscription.h"
+#include "wqlvaluesquery.h"
+#include "wqlrelatedquery.h"
 
 #include "Post.h"
 #include "Comment.h"
@@ -66,6 +68,7 @@ namespace SmartSpace
     QSharedPointer<QWhiteBoardNode> m_node;
 
     QHash<QString, QSharedPointer<TemplateQuery> > m_queries;
+    QHash<QString, QSharedPointer<WqlValuesQuery> > m_wqlQueries;
     QHash<QString, QSharedPointer<TemplateSubscription> > m_subscriptions;
 
     virtual void postProcess(QList<Triple *> triples) =0;
@@ -73,10 +76,13 @@ namespace SmartSpace
   private slots:
     void queryDone(int success);
     void query();
+    void wqlvaluesquerycb(int result);
 
   public:
     CSSHandler(QObject *parent = 0) : QObject(parent) {};
     CSSHandler(QString sibUri, QObject *parent = 0);
+
+    void wqlQuery();
 
     QList<Triple *> m_queryList;
 
@@ -93,6 +99,7 @@ namespace SmartSpace
 
     static Triple* createDefaultTriple(QString subject, QString predicat, QString object);
     static Triple* createLiteralTriple(QString subject, QString predicat, QString object);
+    static QList<Triple *> createTripleList(Triple *triple);
 
   }; // class CSSHandler
 } // namespace SmartSpace

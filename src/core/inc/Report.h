@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: Report.h 59 2011-04-18 14:14:17Z kua $ */
+/* $Id: Report.h 60 2011-04-21 16:42:47Z kua $ */
 /*!
  * \file Report.h
  * \brief Header of CReport
@@ -92,6 +92,8 @@ namespace core
     QString userId() const;
     QString presentationId() const;
     QString timeSlot() const;
+
+    virtual QList<Triple *> triplets() const;
 
     friend QTextStream& operator<<(QTextStream& os, const CReport& post);
   }; // class CReport
