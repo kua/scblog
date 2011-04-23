@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: ScriboHandler.cpp 60 2011-04-21 16:42:47Z kua $ 
+ * $Id: ScriboHandler.cpp 62 2011-04-23 19:53:07Z kua $ 
  *
  * \file ScriboHandler.cpp
  * \brief CScriboHandler implementation
@@ -48,6 +48,8 @@
 
 namespace SmartSpace
 {
+  static const QString PROFILE_QUERY = "['seq',['inv','"+ACCOUNT_TYPE+"'],['inv','"+PERSON_INFORMATION+"']]";
+
   static const QString LOAD_POSTS = QString("LoadPosts");
   static const QString LOAD_COMMENTS = QString("LoadComments");
 
@@ -58,6 +60,10 @@ namespace SmartSpace
   {
     createPredicatesHash();
     subscribeRefreshComments();
+    subscribeSendComment();
+
+    connect(this,SIGNAL(loadProfilesDone(QSet<QString>)),this,SLOT(updateRelatedPersonsSet(QSet<QString>)));
+    //connect(this,SIGNAL(requestPersonsSignal()), this,SLOT(reguestRelatedPersons()),Qt::QueuedConnection);
   }
 
   void CScriboHandler::postProcess(QList<Triple *> triples)
@@ -72,21 +78,16 @@ namespace SmartSpace
     PREDICATES.insert(TITLE, &core::IBlogObject::setTitle);
   }
 
-  void CScriboHandler::loadComments(QString parentId)
+  void CScriboHandler::loadComments(QString subject, QString predicate)
   {
-    QSharedPointer<TemplateQuery> query = creatreQuery(QString(LOAD_COMMENTS + parentId));
+    QSharedPointer<TemplateQuery> query = creatreQuery(QString(LOAD_COMMENTS + subject));
 
     connect(query.data(), SIGNAL(finished(int)), this, SLOT(processBlogObjectsList(int)));
 
-    Triple *triple = createDefaultTriple(parentId, HAS_COMMENT, ANY);
+    QList<Triple *> list = createTripleList(createDefaultTriple(subject, predicate, ANY));
 
-    QList<Triple *> list;
-    list.append(triple);
-
-    query->query(list);
-
-    while(list.count())
-      delete list.takeFirst();
+    m_queryQueue.enqueue(qMakePair(query->objectName(),list));
+    QTimer::singleShot(1,this, SLOT(scriboQuery()));
   }
 
   void CScriboHandler::loadPosts(QString accountName)
@@ -116,8 +117,7 @@ namespace SmartSpace
     if(!query.isNull() && (success == 0))
     {
       QList<Triple *> results = query->results();
-      QString parentId;
-      ScriboObject scriboObject = defineScriboObject(queryName, parentId);
+      ScriboObject scriboObject = defineScriboObject(queryName);
       QList<Triple *> queryList;
 
       for(QList<Triple *>::iterator it = results.begin(); it != results.end(); ++it)
@@ -129,7 +129,7 @@ namespace SmartSpace
         {
           case SCRIBO_COMMENT:
             obj = QSharedPointer<core::IBlogObject> (new core::CComment());
-            obj->parentId()->setSsId(parentId);
+            queryList.push_back(createDefaultTriple(ANY, HAS_COMMENT, id));
             break;
           case SCRIBO_POST:
             obj = QSharedPointer<core::IBlogObject> (new core::CPost());
@@ -172,22 +172,26 @@ namespace SmartSpace
 
     QString queryName = sender()->objectName();
     QSharedPointer<TemplateQuery> query = getQuery(queryName);
-    QString id;
 
     if(!query.isNull() && (success == 0))
     {
       QList<Triple *> results = query->results();
 
-      ScriboObject scriboObject = defineScriboObject(queryName, id);
+      ScriboObject scriboObject = defineScriboObject(queryName);
       QSet<QString> readyBlogObjects;
 
       for(QList<Triple *>::iterator it = results.begin(); it != results.end(); ++it)
       {
-        QString id = (*it)->subject().node();
-        readyBlogObjects.insert(id);
+        if ((*it)->predicate().node() == HAS_COMMENT)
+          m_blogObjects[(*it)->object().node()]->parentId()->setSsId((*it)->subject().node());
+        else
+        {
+          QString id = (*it)->subject().node();
+          readyBlogObjects.insert(id);
 
-        void (core::IBlogObject::*function)(QString) = PREDICATES[(*it)->predicate().node()];
-        (m_blogObjects[id].data()->*function)((*it)->object().node());
+          void (core::IBlogObject::*function)(QString) = PREDICATES[(*it)->predicate().node()];
+          (m_blogObjects[id].data()->*function)((*it)->object().node());
+        }
       }
 
       switch(scriboObject)
@@ -206,12 +210,10 @@ namespace SmartSpace
     }
   }
 
-  ScriboObject CScriboHandler::defineScriboObject(QString name, QString& id)
+  ScriboObject CScriboHandler::defineScriboObject(QString name)
   {
     if(name.contains(LOAD_POSTS))
       return SCRIBO_POST;
-
-    id = name.mid(LOAD_COMMENTS.length(), name.length());
 
     return SCRIBO_COMMENT;
   }
@@ -272,11 +274,11 @@ namespace SmartSpace
 
   void CScriboHandler::subscribeRefreshComments()
   {
-    QSharedPointer<TemplateSubscription> subscription = creatreSubscription("refreshComments");
+    QSharedPointer<TemplateSubscription> subscription = creatreSubscription(REFRESH_COMMENTS);
 
     connect(subscription.data(), SIGNAL(indication()), this, SLOT(refreshCommentsRequest()) );
 
-    Triple *triple = createDefaultTriple(BLOG_SERVICE_NAME, "refreshComments", ACCOUNT_NAME);
+    Triple *triple = createDefaultTriple(BLOG_SERVICE_NAME, REFRESH_COMMENTS, ACCOUNT_NAME);
 
     QList<Triple *> list;
     list.append(triple);
@@ -287,17 +289,41 @@ namespace SmartSpace
       delete list.takeFirst();
   }
 
-  void CScriboHandler::refreshPostsRequest()
+  void CScriboHandler::subscribeSendComment()
   {
+    QSharedPointer<TemplateSubscription> subscription = creatreSubscription(SEND_COMMENT);
+
+    connect(subscription.data(), SIGNAL(indication()), this, SLOT(sendCommentRequest()));
+
+    QList<Triple *> list = createTripleList(createDefaultTriple(BLOG_SERVICE_NAME, SEND_COMMENT, ANY));
+
+    subscription->subscribe(list);
+
+    while(list.count())
+      delete list.takeFirst();
+  }
+
+  void CScriboHandler::sendCommentRequest()
+  {
+    qDebug() << "CScriboHandler::sendCommentRequest";
+
     QSharedPointer<TemplateSubscription> subscription = getSubscription(sender()->objectName());
 
     if(!subscription.isNull())
     {
-      // получить данные для ответа об успехе синхронизации
+      wqlQuery(ACCOUNT_NAME,PROFILE_QUERY, SLOT(processProfileIds(int)));
+
+      qDebug() << "sad";
+
+      QList<Triple*> result = subscription->results();
+
+      foreach(Triple* triple, result)
+      {
+        QString notificationId = triple->object().node();
+        loadComments(notificationId, COMMENT_ID);
+      }
 
       remove(subscription->results());
-
-      emit refreshComments();
     }
   }
 
@@ -309,7 +335,7 @@ namespace SmartSpace
 
     if(!subscription.isNull())
     {
-      // получить данные для ответа об успехе синхронизации
+      wqlQuery(ACCOUNT_NAME,PROFILE_QUERY, SLOT(processProfileIds(int)));
 
       remove(subscription->results());
 
@@ -317,6 +343,24 @@ namespace SmartSpace
     }
   }
 
+  void CScriboHandler::updateRelatedPersonsSet(QSet<QString> personsIds)
+  {
+    m_relatedPersons = personsIds;
+  }
+
+  void CScriboHandler::replyToNotification(QString predicate, QString message)
+  {
+    QList<Triple*> triples;
+
+    foreach(QString person, m_relatedPersons)
+    {
+      QString notification = "Notification" + person;
+
+      triples.push_back(createDefaultTriple(notification,predicate,message));
+    }
+
+    insert(triples);
+  }
 
 } // namespace smartspace
 

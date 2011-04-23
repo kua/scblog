@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: BlogObject.h 59 2011-04-18 14:14:17Z kua $ */
+/* $Id: BlogObject.h 62 2011-04-23 19:53:07Z kua $ */
 /*!
  * \file BlogObject.h
  * \brief Header of IBlogObject
@@ -61,7 +61,6 @@ namespace core
 
     QString m_title;
     QString m_text;
-    QString m_ljPostId;
     QSharedPointer<CId> m_id;
 
   protected:
@@ -79,11 +78,9 @@ namespace core
     void setTitle(QString title);
     void setText(QString text);
     void setId(QSharedPointer<CId> id);
-    void setPostId(QString id);
 
     QString title() const;
     QString text() const;
-    QString postId() const;
     QSharedPointer<CId> id() const;
     QSharedPointer<CId> id();
 

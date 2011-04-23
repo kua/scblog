@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: LjManager.cpp 59 2011-04-18 14:14:17Z kua $ 
+ * $Id: LjManager.cpp 62 2011-04-23 19:53:07Z kua $ 
  *
  * \file LjManager.cpp
  * \brief CLjManager implementation
@@ -76,9 +76,9 @@ namespace BlogService
     performTask();
   }
 
-  void CLjManager::loadComments(QSharedPointer<core::CPost> post)
+  void CLjManager::loadComments(core::CId postId)
   {
-    m_ljHandler->addPostToInputBuffer(post);
+    m_ljHandler->addPostToInputBuffer(postId);
     m_taskQueue.enqueue(&BlogService::CLjHandler::loadComments);
 
     performTask();

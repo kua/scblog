@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: Id.cpp 59 2011-04-18 14:14:17Z kua $ 
+ * $Id: Id.cpp 62 2011-04-23 19:53:07Z kua $ 
  *
  * \file Id.cpp
  * \brief CId implementation
@@ -49,13 +49,13 @@ namespace core
   {
   }
 
-  CId::CId(QString& ssId, QString& ljId) :
+  CId::CId(QString ssId, QString ljId) :
     m_ssId(ssId), m_ljId(ljId)
   {
   }
 
   CId::CId(const CId& obj) :
-    QObject(), m_ssId(obj.ssId()), m_ljId(obj.ljId())
+    QObject(), m_ssId(obj.ssId()), m_ljId(obj.ljId()), m_postId(obj.postId())
   {
   }
 
@@ -63,14 +63,15 @@ namespace core
   {
     m_ssId = obj.ssId();
     m_ljId = obj.ljId();
+    m_postId = obj.postId();
 
     return *this;
   }
 
-  bool CId::operator==(const CId& obj)
+  bool CId::operator==(const CId& obj) const
   {
-    return ((!ssId().isEmpty() && (ssId() == obj.ssId()))
-        || ( !ljId().isEmpty() && (ljId() == obj.ljId())));
+    return (((!obj.ssId().isEmpty()) && (obj.ssId() == ssId()))
+        || ((!obj.ljId().isEmpty()) && (obj.ljId() == ljId())));
   }
 
   void CId::setLjId(QString ljId)
@@ -83,6 +84,11 @@ namespace core
     m_ssId = ssId;
   }
 
+  void CId::setPostId(QString postId)
+  {
+    m_postId = postId;
+  }
+
   QString CId::ssId() const
   {
     return m_ssId;
@@ -91,6 +97,11 @@ namespace core
   QString CId::ljId() const
   {
     return m_ljId;
+  }
+
+  QString CId::postId() const
+  {
+    return m_postId;
   }
 
   bool CId::isLjIdSet() const
@@ -106,6 +117,37 @@ namespace core
   bool CId::isComlete() const
   {
     return (isLjIdSet() && isSsIdSet());
+  }
+
+  bool CId::isPost() const
+  {
+    return m_postId.isEmpty();
+  }
+
+  QDataStream& operator<<(QDataStream& os, const CId& id)
+  {
+    os << id.ssId();
+    os << id.ljId();
+    os << id.postId();
+
+    return os;
+  }
+
+  QDataStream& operator>>(QDataStream& os, CId& id)
+  {
+    QString ssId;
+    os >> ssId;
+    id.setSsId(ssId);
+
+    QString ljId;
+    os >> ljId;
+    id.setLjId(ljId);
+
+    QString postId;
+    os >> postId;
+    id.setPostId(postId);
+
+    return os;
   }
 
 } // namespace core

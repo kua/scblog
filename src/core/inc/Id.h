@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: Id.h 60 2011-04-21 16:42:47Z kua $ */
+/* $Id: Id.h 62 2011-04-23 19:53:07Z kua $ */
 /*!
  * \file Id.h
  * \brief Header of CId
@@ -58,24 +58,32 @@ namespace core
 
     QString m_ssId;
     QString m_ljId;
+    QString m_postId;
 
   public:
     CId();
-    CId(QString& ssId, QString& ljId);
+    CId(QString ssId, QString ljId);
     CId(const CId& obj);
 
     CId& operator=(const CId& obj);
-    bool operator==(const CId& obj);
+    bool operator==(const CId& obj) const;
 
     void setLjId(QString ljId);
     void setSsId(QString ssId);
+    void setPostId(QString postId);
 
     QString ssId() const;
     QString ljId() const;
+    QString postId() const;
 
     bool isLjIdSet() const;
     bool isSsIdSet() const;
     bool isComlete() const;
+    bool isPost() const;
+
+    friend QDataStream& operator<<(QDataStream& os, const CId& id);
+    friend QDataStream& operator>>(QDataStream& os, CId& id);
+
   }; // class CId
 } // namespace core
 

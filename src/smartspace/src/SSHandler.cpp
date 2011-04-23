@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: SSHandler.cpp 60 2011-04-21 16:42:47Z kua $ 
+ * $Id: SSHandler.cpp 62 2011-04-23 19:53:07Z kua $ 
  *
  * \file SSHandler.cpp
  * \brief CSSHandler implementation
@@ -49,6 +49,8 @@
 
 namespace SmartSpace
 {
+  static const QString PROFILE_PREFIX = "profile-";
+
   CSSHandler::CSSHandler(QString sibUri, QObject *parent) :
     QObject(parent)
   {
@@ -177,6 +179,14 @@ namespace SmartSpace
     return QSharedPointer<TemplateQuery> ();
   }
 
+  QSharedPointer<WqlValuesQuery> CSSHandler::getWqlQuery(QString name)
+  {
+    if(m_wqlQueries.contains(name))
+      return m_wqlQueries[name];
+
+    return QSharedPointer<WqlValuesQuery> ();
+  }
+
   QSharedPointer<TemplateSubscription> CSSHandler::creatreSubscription(QString name)
   {
     QSharedPointer<TemplateSubscription> subscription =
@@ -208,34 +218,52 @@ namespace SmartSpace
       m_queries.remove(name);
   }
 
-  void CSSHandler::wqlQuery()
+  void CSSHandler::wqlQuery(QString element, QString query, const char* member)
   {
     QSharedPointer<WqlValuesQuery> q = QSharedPointer<WqlValuesQuery>(new WqlValuesQuery(m_node.data()));
-    q->setObjectName("WQLValuesTestQuery");
+    q->setObjectName("WQLValuesQuery");
+
     if(!m_wqlQueries.contains(q->objectName()))
       m_wqlQueries[q->objectName()] = q;
 
-    connect(q.data(), SIGNAL( finished(int) ), this, SLOT( wqlvaluesquerycb(int) ) );
+    connect(q.data(), SIGNAL(finished(int)), this, member);
 
-    TripleElement el("account-sclj", TripleElement::ElementTypeURI);
-    QString guery = "['seq',['inv','foaf_account'],['inv','scribo_personInformation']]";
+    TripleElement el(element, TripleElement::ElementTypeURI);
 
-    q->query(el, guery);
+    m_wqlQueryQueue.enqueue(qMakePair(el,query));
+    QTimer::singleShot(1,this,SLOT(wqlQuery()));
+}
+
+  void CSSHandler::wqlQuery()
+  {
+    qDebug() << "CSSHandler::wqlQuery";
+
+    QPair<TripleElement, QString > pair = m_wqlQueryQueue.dequeue();
+
+    QSharedPointer<WqlValuesQuery> query = getWqlQuery("WQLValuesQuery");
+    query->query(pair.first,pair.second);
+    qDebug() << "CSSHandler::end";
   }
 
-  void CSSHandler::wqlvaluesquerycb(int result)
+  void CSSHandler::processProfileIds(int result)
   {
-    qDebug() << "resive" << result;
+    qDebug() << "CSSHandler::processProfileIds";
 
-    if(m_wqlQueries.contains(sender()->objectName()))
+    if(m_wqlQueries.contains(sender()->objectName()) && result == 0)
     {
       QSharedPointer<WqlValuesQuery> q = m_wqlQueries[sender()->objectName()];
       QList<TripleElement> results = (q)->results();
       QList<TripleElement>::iterator it;
+
+      QSet<QString> profiles;
+
       for(it = results.begin(); it != results.end(); ++it)
       {
-        qDebug() << (*it).node();
+        QString profile = (*it).node();
+        profiles.insert(profile.mid(PROFILE_PREFIX.size()));
       }
+
+      emit loadProfilesDone(profiles);
     }
   }
 

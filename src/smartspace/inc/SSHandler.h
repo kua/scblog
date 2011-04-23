@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: SSHandler.h 60 2011-04-21 16:42:47Z kua $ */
+/* $Id: SSHandler.h 62 2011-04-23 19:53:07Z kua $ */
 /*!
  * \file CSSHandler.h
  * \brief Header of CSSHandler
@@ -45,6 +45,8 @@
 
 #include <QObject>
 #include <QMap>
+#include <QPair>
+#include <QQueue>
 #include <QSharedPointer>
 #include "q_whiteboard_node.h"
 #include "templatequery.h"
@@ -71,18 +73,24 @@ namespace SmartSpace
     QHash<QString, QSharedPointer<WqlValuesQuery> > m_wqlQueries;
     QHash<QString, QSharedPointer<TemplateSubscription> > m_subscriptions;
 
+    QQueue< QPair<TripleElement, QString > > m_wqlQueryQueue;
+
     virtual void postProcess(QList<Triple *> triples) =0;
 
   private slots:
     void queryDone(int success);
     void query();
-    void wqlvaluesquerycb(int result);
+    void wqlQuery();
+    void processProfileIds(int result);
+
+  signals:
+    void loadProfilesDone(QSet<QString>);
 
   public:
     CSSHandler(QObject *parent = 0) : QObject(parent) {};
     CSSHandler(QString sibUri, QObject *parent = 0);
 
-    void wqlQuery();
+    void wqlQuery(QString element, QString query, const char* member);
 
     QList<Triple *> m_queryList;
 
@@ -95,6 +103,7 @@ namespace SmartSpace
     QSharedPointer<TemplateQuery> creatreQuery(QString name);
     QSharedPointer<TemplateSubscription> getSubscription(QString name);
     QSharedPointer<TemplateQuery> getQuery(QString name);
+    QSharedPointer<WqlValuesQuery> getWqlQuery(QString name);
     void deleteQuery(QString name);
 
     static Triple* createDefaultTriple(QString subject, QString predicat, QString object);

@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: LjHandler.cpp 59 2011-04-18 14:14:17Z kua $ 
+ * $Id: LjHandler.cpp 62 2011-04-23 19:53:07Z kua $ 
  *
  * \file LjHandler.cpp
  * \brief CLjHandler implementation
@@ -319,11 +319,13 @@ namespace BlogService
 
     QString journal = m_userName.replace('-', '_');
 
+    QString parentId = (comment->parentId()->ljId() == comment->id()->postId()) ? 0 : comment->parentId()->ljId();
+
     parameters.insert("body", comment->text());
     parameters.insert("subject", comment->title());
-    parameters.insert("ditemid", comment->postId());
+    parameters.insert("ditemid", comment->id()->postId());
     parameters.insert("journal", journal);
-    parameters.insert("parent", comment->parentId()->ljId());
+    parameters.insert("parent", parentId);
 
     QString request = CRequestCreator::createRequest("LJ.XMLRPC.addcomment", parameters);
 
@@ -361,9 +363,9 @@ namespace BlogService
     QString journal = m_userName.replace('-', '_');
     QMap<QString, QString> parameters = initParametersMap(response);
 
-    qDebug() << "LjID" << m_postsInputBuffer.first()->id()->ljId();
+    qDebug() << "LjID" << m_postsInputBuffer.first().ljId();
 
-    parameters.insert("ditemid", m_postsInputBuffer.first()->id()->ljId());
+    parameters.insert("ditemid", m_postsInputBuffer.first().ljId());
     parameters.insert("journal", journal);
     parameters.insert("page", "1");
 
@@ -377,11 +379,12 @@ namespace BlogService
     qDebug() << "process comments";
     CResponseParser parser(response);
     QList<QSharedPointer<core::CComment> > comments = parser.parseElements<core::CComment> ();
-    QString postId = m_postsInputBuffer.dequeue()->id()->ljId();
+    QString postId = m_postsInputBuffer.dequeue().ljId();
 
+    qDebug() << "POSTID" << postId;
     foreach(QSharedPointer<core::CComment> comment, comments)
     {
-      comment->setPostId(postId);
+      comment->id()->setPostId(postId);
 
       if (!comment->parentId()->isLjIdSet())
         comment->parentId()->setLjId(postId);
@@ -410,9 +413,9 @@ namespace BlogService
     m_postsOutputBuffer.enqueue(post);
   }
 
-  void CLjHandler::addPostToInputBuffer(QSharedPointer<core::CPost> post)
+  void CLjHandler::addPostToInputBuffer(core::CId postId)
   {
-    m_postsInputBuffer.enqueue(post);
+    m_postsInputBuffer.enqueue(postId);
   }
 
   void CLjHandler::addCommentToOutputBuffer(QSharedPointer<core::CComment> comment)

@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: BlogObject.cpp 59 2011-04-18 14:14:17Z kua $ 
+ * $Id: BlogObject.cpp 62 2011-04-23 19:53:07Z kua $ 
  *
  * \file BlogObject.cpp
  * \brief IBlogObject implementation
@@ -86,16 +86,6 @@ namespace core
     m_text = text;
   }
 
-  void IBlogObject::setPostId(QString postId)
-  {
-    m_ljPostId = postId;
-  }
-
-  QString IBlogObject::postId() const
-  {
-    return m_ljPostId;
-  }
-
   QString IBlogObject::text() const
   {
     return m_text;
@@ -134,6 +124,7 @@ namespace core
     os << "Title: " << blogObject.title() << "; ";
     os << "Text: " << blogObject.text() << "; ";
     os << "ditemId: " << blogObject.id()->ljId() << "; ";
+    os << "ljPostId: " << blogObject.id()->postId() << "; ";
 
     return os;
   }

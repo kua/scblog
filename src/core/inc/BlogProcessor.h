@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: BlogProcessor.h 60 2011-04-21 16:42:47Z kua $ */
+/* $Id: BlogProcessor.h 62 2011-04-23 19:53:07Z kua $ */
 /*!
  * \file BlogProcessor.h
  * \brief Header of CBlogProcessor
@@ -75,11 +75,18 @@ namespace core
 
     QMap<CId, QSharedPointer<IBlogObject> > m_blogObjects;
     QList<CId> m_postIds;
+
     QList<QSharedPointer<CComment> > m_toSsList;
+
+    QList<CId> m_idList;
 
     bool setParent(QSharedPointer<CComment> comment, bool copyPostId);
     void saveCommentToSs();
     void saveCommentToLj(QSharedPointer<CComment> comment);
+    bool checkBlogObjectContains(const CId id);
+    void printSerializedMap();
+    CId getFullId(const CId id);
+    void storeBlogObject(CId id, QSharedPointer<IBlogObject> blogObject);
 
   private slots:
 
@@ -96,6 +103,8 @@ namespace core
     ~CBlogProcessor(){};
     
     void init();
+    void deserialize();
+    void serialize();
   }; // class CBlogProcessor
 } // namespace core
 

@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: main.cpp 59 2011-04-18 14:14:17Z kua $ 
+ * $Id: main.cpp 63 2011-04-23 22:20:00Z kua $ 
  *
  * \file main.cpp
  *
@@ -54,6 +54,8 @@ int main(int argc, char *argv[])
   g_type_init();
 
   core::CBlogProcessor processor;
+  processor.deserialize();
+
   processor.init();
 
   return app.exec();

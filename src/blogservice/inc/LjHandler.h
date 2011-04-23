@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: LjHandler.h 59 2011-04-18 14:14:17Z kua $ */
+/* $Id: LjHandler.h 62 2011-04-23 19:53:07Z kua $ */
 /*!
  * \file LjHandler.h
  * \brief Header of CLjHandler
@@ -49,6 +49,7 @@
 #include <QQueue>
 #include <QSharedPointer>
 #include "Post.h"
+#include "Id.h"
 #include "Comment.h"
 
 namespace BlogService
@@ -68,7 +69,7 @@ namespace BlogService
     QString m_password;
 
     QQueue<QSharedPointer<core::CPost> > m_postsOutputBuffer;
-    QQueue<QSharedPointer<core::CPost> > m_postsInputBuffer;
+    QQueue<core::CId> m_postsInputBuffer;
     QQueue<QSharedPointer<core::CComment> > m_commentsOutputBuffer;
 
     void (BlogService::CLjHandler::*m_postProcessor)(QString);
@@ -120,7 +121,7 @@ namespace BlogService
     void sendComment();
 
     void addPostToOutputBuffer(QSharedPointer<core::CPost> post);
-    void addPostToInputBuffer(QSharedPointer<core::CPost> post);
+    void addPostToInputBuffer(core::CId postId);
     void addCommentToOutputBuffer(QSharedPointer<core::CComment> comment);
   }; // class CLjHandler
 } // namespace BlogService

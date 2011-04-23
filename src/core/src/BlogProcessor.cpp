@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: BlogProcessor.cpp 60 2011-04-21 16:42:47Z kua $ 
+ * $Id: BlogProcessor.cpp 63 2011-04-23 22:20:00Z kua $ 
  *
  * \file BlogProcessor.cpp
  * \brief CBlogProcessor implementation
@@ -43,12 +43,15 @@
 #include <QDebug>
 #include <QTimer>
 #include <QSet>
+#include <QFile>
 #include "BlogProcessor.h"
 #include "Id.h"
 #include "Ontology.h"
 
 namespace core
 {
+  static const QString SERIALIZE_FILE_NAME = "scblog.dat";
+
   CBlogProcessor::CBlogProcessor()
   {
     m_ljManager = new BlogService::CLjManager(this);
@@ -86,14 +89,46 @@ namespace core
 
   void CBlogProcessor::reciveReports(QList<QSharedPointer<core::CReport> > posts)
   {
+    qDebug() << "CBlogProcessor::reciveReports";
+
     foreach (QSharedPointer<core::CReport> object, posts)
-    {
         m_scriboHandler->sendBlogObject(object);
 
-        //if(!m_blogObjects.contains(*object->id()))
-        //  m_ljManager->sendPost(object);
-    }
     m_scriboHandler->loadPosts(SmartSpace::ACCOUNT_NAME);
+  }
+
+  bool CBlogProcessor::checkBlogObjectContains(const CId id)
+  {
+    QList<CId>::iterator it = m_idList.begin();
+    bool flag = false;
+
+    while((it != m_idList.end()) && (!flag))
+    {
+      if(*it == id)
+        flag = true;
+
+      ++it;
+    }
+
+    return flag;
+  }
+
+  CId CBlogProcessor::getFullId(const CId id)
+  {
+    QList<CId>::iterator it = m_idList.begin();
+
+    while(it != m_idList.end())
+    {
+      if(*it == id)
+      {
+        qDebug()<<"1";
+        return *it;
+        qDebug()<<"2";
+      }
+      ++it;
+    }
+
+    return id;
   }
 
   void CBlogProcessor::reciveLjComments(QList<QSharedPointer<core::CComment> > comments)
@@ -101,7 +136,7 @@ namespace core
     qDebug() << "CBlogProcessor::reciveLjComments";
 
     foreach(QSharedPointer<core::CComment> comment, comments)
-        if(!m_blogObjects.contains(*comment->id()))
+        if(!checkBlogObjectContains(*comment->id()))
         {
           comment->generateSsId();
           m_toSsList.push_back(comment);
@@ -109,24 +144,18 @@ namespace core
 
     saveCommentToSs();
 
-    qDebug() << "Size" << m_blogObjects.size();
-    for(QMap<CId, QSharedPointer<IBlogObject> >::const_iterator it = m_blogObjects.begin(); it != m_blogObjects.end(); ++it)
-    {
-      QString s;
+    m_scriboHandler->replyToNotification(SmartSpace::REFRESH_COMMENTS, "ок");
 
-      QTextStream os(&s);
-      os << **it;
-
-      qDebug() << s;
-    }
+    printSerializedMap();
   }
 
   void CBlogProcessor::reciveSsComments(QList<QSharedPointer<core::CComment> > comments)
   {
+    qDebug() << "CBlogProcessor::reciveSsComments";
+
     foreach(QSharedPointer<CComment> comment, comments)
-        if(!m_blogObjects.contains(*comment->id()))
+        if(!checkBlogObjectContains(*comment->id()))
           saveCommentToLj(comment);
-    //m_blogObjects.insert(comment->id(), comment);
   }
 
   void CBlogProcessor::reciveSsPosts(QList<QSharedPointer<core::CPost> > posts)
@@ -134,46 +163,37 @@ namespace core
     qDebug() << "CBlogProcessor::reciveSsPosts";
 
     foreach(QSharedPointer<core::CPost> post, posts)
-        if(!m_blogObjects.contains(*post->id()))
-        {
+        if(!checkBlogObjectContains(*post->id()))
           m_ljManager->sendPost(post);
-          //m_blogObjects.insert(post->id(), post);
-        }
   }
 
   void CBlogProcessor::refreshComments()
   {
-    qDebug() << QString("refreshComments");
+    qDebug() << "CBlogProcessor::refreshComments";
 
     foreach(CId id, m_postIds)
-      {
-        QString s;
-
-        QTextStream os(&s);
-        os << *m_blogObjects[id].dynamicCast<CPost> ();
-
-        qDebug() << s;
-
-        m_ljManager->loadComments(m_blogObjects[id].dynamicCast<CPost> ());
-      }
+        m_ljManager->loadComments(id);
   }
 
   bool CBlogProcessor::setParent(QSharedPointer<CComment> comment, bool copyPostId = false)
   {
+    qDebug() << "CBlogProcessor::setParent";
     qDebug() << "parentId" << comment->parentId()->ljId() << comment->parentId()->ssId();
 
-    if(!m_blogObjects.contains(*comment->parentId()))
+    if(!checkBlogObjectContains(*comment->parentId()))
       return false;
 
-    QSharedPointer<IBlogObject> parent = m_blogObjects.value(*comment->parentId());
+    CId parentId = getFullId(*comment->parentId());
 
-    if(parent->id()->isComlete())
+    if(parentId.isComlete())
     {
-      comment->setParentId(parent->id());
+      comment->setParentId(QSharedPointer<CId> (new CId(parentId)));
 
       if(copyPostId)
-        comment->setPostId(parent->postId());
-
+      {
+        QString postId = parentId.postId().isEmpty() ? parentId.ljId() : parentId.postId();
+        comment->id()->setPostId(postId);
+      }
       return true;
     }
 
@@ -187,12 +207,12 @@ namespace core
     while(!m_toSsList.isEmpty())
     {
       QList<QSharedPointer<CComment> > temp = m_toSsList;
-     
+
       for(QList<QSharedPointer<CComment> >::iterator iter = temp.begin(); iter != temp.end(); ++iter)
         if(setParent(*iter))
         {
           m_scriboHandler->sendBlogObject(*iter);
-          m_blogObjects.insert(*(*iter)->id(), *iter);
+          storeBlogObject(*(*iter)->id(), *iter);
           m_toSsList.removeOne(*iter);
 
           QString s;
@@ -202,6 +222,13 @@ namespace core
           qDebug() << s;
         }
     }
+  }
+
+  void CBlogProcessor::storeBlogObject(CId id, QSharedPointer<IBlogObject> blogObject)
+  {
+    m_blogObjects.insert(id, blogObject);
+    m_idList.push_back(id);
+    serialize();
   }
 
   void CBlogProcessor::saveCommentToLj(QSharedPointer<CComment> comment)
@@ -214,13 +241,53 @@ namespace core
   {
     qDebug() << "CBlogProcessor::storePost";
 
-    m_blogObjects.insert(id, post);
+    storeBlogObject(id, post);
     m_postIds.push_back(id);
   }
 
   void CBlogProcessor::storeComment(core::CId id, QSharedPointer<core::CComment> comment)
   {
-    m_blogObjects.insert(id, comment);
+    storeBlogObject(id, comment);
+    m_scriboHandler->replyToNotification(SmartSpace::SEND_COMMENT, "ok");
+  }
+
+  void CBlogProcessor::printSerializedMap()
+  {
+    qDebug() << "Map Size" << m_blogObjects.size();
+    for(QMap<CId, QSharedPointer<IBlogObject> >::iterator iter = m_blogObjects.begin(); iter != m_blogObjects.end(); ++iter)
+    {
+      QString s;
+
+      QTextStream os(&s);
+      os << **iter;
+      qDebug() << s;
+    }
+  }
+
+  void CBlogProcessor::serialize()
+  {
+    QFile file(SERIALIZE_FILE_NAME);
+    file.remove();
+    file.open(QIODevice::WriteOnly);
+    QDataStream out(&file);
+    out << m_idList;
+    file.close();
+  }
+
+  void CBlogProcessor::deserialize()
+  {
+    QFile file(SERIALIZE_FILE_NAME);
+    if(file.exists())
+    {
+      file.open(QIODevice::ReadOnly);
+      QDataStream in(&file);
+      in >> m_idList;
+    }
+    file.close();
+
+    foreach(CId id, m_idList)
+        if(id.isPost())
+          m_postIds.push_back(id);
   }
 
 } // namespace core

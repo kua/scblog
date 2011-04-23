@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: ScriboHandler.h 59 2011-04-18 14:14:17Z kua $ */
+/* $Id: ScriboHandler.h 62 2011-04-23 19:53:07Z kua $ */
 /*!
  * \file ScriboHandler.h
  * \brief Header of CScriboHandler
@@ -69,6 +69,8 @@ namespace SmartSpace
 
     QQueue<QPair<QString, QList<Triple*> > > m_queryQueue;
 
+    QSet<QString> m_relatedPersons;
+
     void createPredicatesHash();
 
     virtual void postProcess(QList<Triple *> triples);
@@ -77,25 +79,32 @@ namespace SmartSpace
     void emitPostSignal(QSet<QString> readyBlogObjects);
 
     void subscribeRefreshComments();
-    ScriboObject defineScriboObject(QString name, QString& id);
+    void subscribeSendComment();
+    ScriboObject defineScriboObject(QString name);
 
   private slots:
     void refreshCommentsRequest();
-    void refreshPostsRequest();
+    void sendCommentRequest();
     void processBlogObjectsList(int success);
     void processBlogObjects(int success);
     void scriboQuery();
+    void updateRelatedPersonsSet(QSet<QString> personsIds);
+    //void reguestRelatedPersons();
+
+  public slots:
+    void replyToNotification(QString predicate, QString message);
 
   signals:
     void loadPostsDone( QList<QSharedPointer<core::CPost> > posts);
     void loadCommentsDone(QList<QSharedPointer<core::CComment> > comments);
     void refreshComments();
+    //void requestPersonsSignal();
 
   public:
     CScriboHandler(QString sibUri, QObject *parent = 0);
     ~CScriboHandler(){};
 
-    void loadComments(QString parentId);
+    void loadComments(QString subject, QString predicate);
     void loadPosts(QString accountName);
     
     void sendPosts(QList<core::CPost> posts);
