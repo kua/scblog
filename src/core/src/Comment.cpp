@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: Comment.cpp 63 2011-04-23 22:20:00Z kua $ 
+ * $Id: Comment.cpp 64 2011-04-24 16:27:13Z kua $ 
  *
  * \file Comment.cpp
  * \brief CComment implementation
@@ -69,6 +69,7 @@ namespace core
   CComment& CComment::operator=(const CComment& obj)
   {
     qobject_cast<IBlogObject*>(this)->operator=(obj);
+    m_parentId = obj.parentId();
 
     return *this;
   }

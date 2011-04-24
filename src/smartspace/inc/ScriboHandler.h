@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: ScriboHandler.h 62 2011-04-23 19:53:07Z kua $ */
+/* $Id: ScriboHandler.h 64 2011-04-24 16:27:13Z kua $ */
 /*!
  * \file ScriboHandler.h
  * \brief Header of CScriboHandler
@@ -89,7 +89,6 @@ namespace SmartSpace
     void processBlogObjects(int success);
     void scriboQuery();
     void updateRelatedPersonsSet(QSet<QString> personsIds);
-    //void reguestRelatedPersons();
 
   public slots:
     void replyToNotification(QString predicate, QString message);
@@ -98,7 +97,6 @@ namespace SmartSpace
     void loadPostsDone( QList<QSharedPointer<core::CPost> > posts);
     void loadCommentsDone(QList<QSharedPointer<core::CComment> > comments);
     void refreshComments();
-    //void requestPersonsSignal();
 
   public:
     CScriboHandler(QString sibUri, QObject *parent = 0);

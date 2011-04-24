@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: BlogProcessor.cpp 63 2011-04-23 22:20:00Z kua $ 
+ * $Id: BlogProcessor.cpp 64 2011-04-24 16:27:13Z kua $ 
  *
  * \file BlogProcessor.cpp
  * \brief CBlogProcessor implementation
@@ -66,8 +66,6 @@ namespace core
     QObject::connect(m_conferenceHandler, SIGNAL(loadReportsDone(QList<QSharedPointer<core::CReport> >)), this,
                      SLOT(reciveReports(QList<QSharedPointer<core::CReport> >)));
 
-    //QObject::connect(ljHandler.data(), SIGNAL(loadPostsDone(QList<QSharedPointer<core::CPost> >)), this,
-    //                 SLOT(reciveLjPosts(QList<QSharedPointer<core::CPost> >)));
     QObject::connect(ljHandler.data(), SIGNAL(loadCommentsDone(QList<QSharedPointer<core::CComment> >)), this,
                      SLOT(reciveLjComments(QList<QSharedPointer<core::CComment> >)));
     QObject::connect(ljHandler.data(), SIGNAL(sendPostDone(core::CId, QSharedPointer<core::CPost>)), this,
@@ -120,11 +118,8 @@ namespace core
     while(it != m_idList.end())
     {
       if(*it == id)
-      {
-        qDebug()<<"1";
         return *it;
-        qDebug()<<"2";
-      }
+
       ++it;
     }
 

@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: LjHandler.cpp 62 2011-04-23 19:53:07Z kua $ 
+ * $Id: LjHandler.cpp 64 2011-04-24 16:27:13Z kua $ 
  *
  * \file LjHandler.cpp
  * \brief CLjHandler implementation
@@ -376,7 +376,7 @@ namespace BlogService
 
   void CLjHandler::processComments(QString response)
   {
-    qDebug() << "process comments";
+    qDebug() << "CLjHandler::process comments";
     CResponseParser parser(response);
     QList<QSharedPointer<core::CComment> > comments = parser.parseElements<core::CComment> ();
     QString postId = m_postsInputBuffer.dequeue().ljId();

@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: RequestCreator.cpp 59 2011-04-18 14:14:17Z kua $ 
+ * $Id: RequestCreator.cpp 64 2011-04-24 16:27:13Z kua $ 
  *
  * \file RequestCreator.cpp
  * \brief CRequestCreator implementation
@@ -92,8 +92,6 @@ namespace BlogService
 
     QTextStream os(&result);
     doc.save(os, indent);
-
-    //qDebug() << result;
 
     return result;
   }

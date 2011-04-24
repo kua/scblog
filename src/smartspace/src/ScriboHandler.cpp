@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: ScriboHandler.cpp 62 2011-04-23 19:53:07Z kua $ 
+ * $Id: ScriboHandler.cpp 64 2011-04-24 16:27:13Z kua $ 
  *
  * \file ScriboHandler.cpp
  * \brief CScriboHandler implementation
@@ -63,7 +63,6 @@ namespace SmartSpace
     subscribeSendComment();
 
     connect(this,SIGNAL(loadProfilesDone(QSet<QString>)),this,SLOT(updateRelatedPersonsSet(QSet<QString>)));
-    //connect(this,SIGNAL(requestPersonsSignal()), this,SLOT(reguestRelatedPersons()),Qt::QueuedConnection);
   }
 
   void CScriboHandler::postProcess(QList<Triple *> triples)
@@ -309,11 +308,9 @@ namespace SmartSpace
 
     QSharedPointer<TemplateSubscription> subscription = getSubscription(sender()->objectName());
 
-    if(!subscription.isNull())
+    if(!subscription.isNull() && subscription->results().size())
     {
       wqlQuery(ACCOUNT_NAME,PROFILE_QUERY, SLOT(processProfileIds(int)));
-
-      qDebug() << "sad";
 
       QList<Triple*> result = subscription->results();
 
@@ -333,7 +330,7 @@ namespace SmartSpace
 
     QSharedPointer<TemplateSubscription> subscription = getSubscription(sender()->objectName());
 
-    if(!subscription.isNull())
+    if(!subscription.isNull() && subscription->results().size())
     {
       wqlQuery(ACCOUNT_NAME,PROFILE_QUERY, SLOT(processProfileIds(int)));
 

@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: LjManager.cpp 62 2011-04-23 19:53:07Z kua $ 
+ * $Id: LjManager.cpp 64 2011-04-24 16:27:13Z kua $ 
  *
  * \file LjManager.cpp
  * \brief CLjManager implementation
@@ -58,13 +58,11 @@ namespace BlogService
 
   void CLjManager::performTask()
   {
-
     if (m_ljHandler->isReady() && !m_taskQueue.isEmpty())
     {
-      qDebug() << "m_taskQueue.size()" << m_taskQueue.size();
+      qDebug() << "CLjManager::performTask::m_taskQueue.size()" << m_taskQueue.size();
 
       void (BlogService::CLjHandler::*function)() = m_taskQueue.dequeue();
-      qDebug() << "m_taskQueue.size()" << m_taskQueue.size();
       (m_ljHandler.data()->*function)();
     }
   }
