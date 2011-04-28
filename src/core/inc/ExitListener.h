@@ -29,41 +29,45 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/*! ---------------------------------------------------------------
- * $Id: main.cpp 65 2011-04-25 19:46:33Z kua $ 
- *
- * \file main.cpp
+/* $Id$ */
+/*!
+ * \file ExitListiner.h
+ * \brief Header of CExitListiner
+ * \todo add comment here
  *
  * File description
  *
  * PROJ: OSLL/scblog
  * ---------------------------------------------------------------- */
 
-#include <QtCore>
-#include "BlogProcessor.h"
-#include "ExitListener.h"
-#include "q_whiteboard_node.h"
-#include "q_sib_discovery.h"
-#include <glib-object.h>
+#ifndef _ExitListener_H_D381DA06_CF52_48B2_9128_48BD337A5F49_INCLUDED_
+#define _ExitListener_H_D381DA06_CF52_48B2_9128_48BD337A5F49_INCLUDED_
 
-int main(int argc, char *argv[])
+#include <QThread>
+
+namespace core
 {
-  QCoreApplication app(argc, argv);
-  QTextCodec *rusCodec = QTextCodec::codecForName("UTF-8");
-  QTextCodec::setCodecForTr(rusCodec);
+ /*!
+   * Class description. May use HTML formatting
+   *
+   */
+  class CExitListener:
+    public QThread
+  {
+    Q_OBJECT
 
-  g_type_init();
+  public:
+    CExitListener(QObject* parent=NULL):QThread(parent){};
 
-  core::CBlogProcessor processor;
-  processor.deserialize();
-  processor.init();
+    virtual void run();
+    
+  signals:
+    void finished();
 
-  core::CExitListener exitListener;
+  }; // class CExitListener
+  
+} // namespace core
 
-  QObject::connect(&exitListener, SIGNAL(finished()), &app, SLOT(quit()));
-  exitListener.start(QThread::LowPriority);
+#endif //_ExitListener_H_D381DA06_CF52_48B2_9128_48BD337A5F49_INCLUDED_
 
-  return app.exec();
-}
-
-/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/main.cpp $ ]=== */
+/* ===[ End of file $HeadURL$ ]=== */

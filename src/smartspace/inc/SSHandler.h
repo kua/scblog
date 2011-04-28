@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: SSHandler.h 62 2011-04-23 19:53:07Z kua $ */
+/* $Id: SSHandler.h 65 2011-04-25 19:46:33Z kua $ */
 /*!
  * \file CSSHandler.h
  * \brief Header of CSSHandler
@@ -89,6 +89,7 @@ namespace SmartSpace
   public:
     CSSHandler(QObject *parent = 0) : QObject(parent) {};
     CSSHandler(QString sibUri, QObject *parent = 0);
+    ~CSSHandler();
 
     void wqlQuery(QString element, QString query, const char* member);
 
@@ -99,6 +100,7 @@ namespace SmartSpace
     void insert(QList<Triple*> triplets);
     void remove(QList<Triple*> list);
     void query(Triple* triple);
+    QSharedPointer<QWhiteBoardNode> getNode();
     QSharedPointer<TemplateSubscription> creatreSubscription(QString name);
     QSharedPointer<TemplateQuery> creatreQuery(QString name);
     QSharedPointer<TemplateSubscription> getSubscription(QString name);

@@ -93,6 +93,7 @@ namespace core
     QString presentationId() const;
     QString timeSlot() const;
 
+    QList<Triple *> scTriplets() const;
     virtual QList<Triple *> triplets() const;
 
     friend QTextStream& operator<<(QTextStream& os, const CReport& post);

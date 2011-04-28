@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: SSHandler.cpp 62 2011-04-23 19:53:07Z kua $ 
+ * $Id: SSHandler.cpp 65 2011-04-25 19:46:33Z kua $ 
  *
  * \file SSHandler.cpp
  * \brief CSSHandler implementation
@@ -56,6 +56,11 @@ namespace SmartSpace
   {
     m_node = QSharedPointer<QWhiteBoardNode> (new QWhiteBoardNode);
     join(sibUri);
+  }
+
+  CSSHandler::~CSSHandler()
+  {
+    m_node->leave();
   }
 
   void CSSHandler::join(QString sibUri)
@@ -265,6 +270,11 @@ namespace SmartSpace
 
       emit loadProfilesDone(profiles);
     }
+  }
+
+  QSharedPointer<QWhiteBoardNode> CSSHandler::getNode()
+  {
+    return m_node;
   }
 
 } // namespace SmartSpace

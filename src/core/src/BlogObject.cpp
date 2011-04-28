@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: BlogObject.cpp 62 2011-04-23 19:53:07Z kua $ 
+ * $Id: BlogObject.cpp 66 2011-04-26 19:07:12Z kua $ 
  *
  * \file BlogObject.cpp
  * \brief IBlogObject implementation
@@ -69,6 +69,11 @@ namespace core
     m_id = obj.id();
 
     return *this;
+  }
+
+  QString IBlogObject::encodeString(QByteArray bytes) const
+  {
+    return QString::fromUtf8(bytes.toBase64());
   }
 
   bool IBlogObject::operator==(const IBlogObject& obj)

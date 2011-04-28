@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: BlogProcessor.cpp 64 2011-04-24 16:27:13Z kua $ 
+ * $Id: BlogProcessor.cpp 66 2011-04-26 19:07:12Z kua $ 
  *
  * \file BlogProcessor.cpp
  * \brief CBlogProcessor implementation
@@ -57,15 +57,23 @@ namespace core
     m_ljManager = new BlogService::CLjManager(this);
 
     QSharedPointer<BlogService::CLjHandler> ljHandler =
-        QSharedPointer<BlogService::CLjHandler> (new BlogService::CLjHandler("http://www.livejournal.com", "osll",
-                                                                             "scblog1861", m_ljManager));
-    m_conferenceHandler = new SmartSpace::CConferenceHandler("X", this);
-    m_scriboHandler = new SmartSpace::CScriboHandler("X", this);
+    //QSharedPointer<BlogService::CLjHandler> (new BlogService::CLjHandler("http://demo-lj.cs.karelia.ru", "scblog", "scblog1861", m_ljManager));
+    //QSharedPointer<BlogService::CLjHandler> (new BlogService::CLjHandler("http://www.livejournal.com", "osll", "scblog1861", m_ljManager));
+    QSharedPointer<BlogService::CLjHandler> (new BlogService::CLjHandler("http://www.livejournal.com", "scfruct", "fruct9", m_ljManager));
+    QString proxyName = "proxy.karelia.ru";
+    ljHandler->setProxy(proxyName, 81);
+
+    m_conferenceHandler = new SmartSpace::CConferenceHandler("X\n", this);
+    m_scriboHandler = new SmartSpace::CScriboHandler("X\n", this);
     m_ljManager->setHandler(ljHandler);
+
+    m_postsCounter = 0;
 
     QObject::connect(m_conferenceHandler, SIGNAL(loadReportsDone(QList<QSharedPointer<core::CReport> >)), this,
                      SLOT(reciveReports(QList<QSharedPointer<core::CReport> >)));
 
+    QObject::connect(ljHandler.data(), SIGNAL(loadPostsDone(QList<QSharedPointer<core::CPost> >)), this,
+                        SLOT(reciveLjPosts(QList<QSharedPointer<core::CPost> >)));
     QObject::connect(ljHandler.data(), SIGNAL(loadCommentsDone(QList<QSharedPointer<core::CComment> >)), this,
                      SLOT(reciveLjComments(QList<QSharedPointer<core::CComment> >)));
     QObject::connect(ljHandler.data(), SIGNAL(sendPostDone(core::CId, QSharedPointer<core::CPost>)), this,
@@ -78,11 +86,23 @@ namespace core
     QObject::connect(m_scriboHandler, SIGNAL(loadCommentsDone(QList<QSharedPointer<core::CComment> >)), this,
                      SLOT(reciveSsComments(QList<QSharedPointer<core::CComment> >)));
     QObject::connect(m_scriboHandler, SIGNAL(refreshComments()), this, SLOT(refreshComments()));
+
+    m_timer = new QTimer(this);
+    m_timer->start(100000);
+
+    QObject::connect(m_timer,SIGNAL(timeout()), this, SLOT(refreshByTimer()));
   }
 
   void CBlogProcessor::init()
   {
-    m_conferenceHandler->loadReports();
+    loadExistingLjPosts();
+    //m_conferenceHandler->loadReports();
+  }
+
+  void CBlogProcessor::refreshByTimer()
+  {
+    if (m_ljManager->isWait())
+      refreshComments();
   }
 
   void CBlogProcessor::reciveReports(QList<QSharedPointer<core::CReport> > posts)
@@ -90,7 +110,12 @@ namespace core
     qDebug() << "CBlogProcessor::reciveReports";
 
     foreach (QSharedPointer<core::CReport> object, posts)
+    {
         m_scriboHandler->sendBlogObject(object);
+        m_conferenceHandler->saveReport(object);
+    }
+
+    m_scriboHandler->replyToNotification(SmartSpace::REFRESH_POSTS, "ok");
 
     m_scriboHandler->loadPosts(SmartSpace::ACCOUNT_NAME);
   }
@@ -139,7 +164,13 @@ namespace core
 
     saveCommentToSs();
 
-    m_scriboHandler->replyToNotification(SmartSpace::REFRESH_COMMENTS, "ок");
+    m_postsCounter++;
+
+    if (m_postsCounter == m_postIds.size())
+    {
+      m_scriboHandler->replyToNotification(SmartSpace::REFRESH_COMMENTS, "ok");
+      m_postsCounter = 0;
+    }
 
     printSerializedMap();
   }
@@ -159,14 +190,29 @@ namespace core
 
     foreach(QSharedPointer<core::CPost> post, posts)
         if(!checkBlogObjectContains(*post->id()))
-          m_ljManager->sendPost(post);
+        {
+          qDebug() << "CBlogProcessor::newPost";
+
+          if (m_existingLjPosts.contains(post->title()))
+          {
+            qDebug() << "CBlogProcessor::existingLjPost";
+
+            QSharedPointer<core::CPost> ljPost = m_existingLjPosts.value(post->title());
+            post->id()->setLjId(ljPost->id()->ljId());
+
+            storePost(*post->id(),post);
+          }
+          else
+            m_ljManager->sendPost(post);
+        }
   }
 
   void CBlogProcessor::refreshComments()
   {
     qDebug() << "CBlogProcessor::refreshComments";
 
-    foreach(CId id, m_postIds)
+    if (!m_ljManager->isLoadComment())
+      foreach(CId id, m_postIds)
         m_ljManager->loadComments(id);
   }
 
@@ -242,8 +288,40 @@ namespace core
 
   void CBlogProcessor::storeComment(core::CId id, QSharedPointer<core::CComment> comment)
   {
+    qDebug() << "CBlogProcessor::storeComment";
+
     storeBlogObject(id, comment);
+    m_scriboHandler->saveParentRelations(comment);
     m_scriboHandler->replyToNotification(SmartSpace::SEND_COMMENT, "ok");
+  }
+
+  void CBlogProcessor::loadExistingLjPosts()
+  {
+    qDebug() << "CBlogProcessor::loadExistingLjPosts()";
+
+    m_ljManager->loadPosts();
+  }
+
+  void CBlogProcessor::reciveLjPosts(QList<QSharedPointer<core::CPost> > posts)
+  {
+    qDebug() << "CBlogProcessor::reciveLjPosts";
+
+    foreach(QSharedPointer<core::CPost> post, posts)
+    {
+      m_existingLjPosts[post->title()] = post;
+
+      QString s;
+
+      QTextStream os(&s);
+      os << *post;
+      qDebug() << s;
+    }
+
+    m_conferenceHandler->subscribeToScheduleChanges();
+    m_scriboHandler->subscribeRefreshComments();
+    m_scriboHandler->subscribeSendComment();
+
+    m_conferenceHandler->loadReports();
   }
 
   void CBlogProcessor::printSerializedMap()
@@ -284,7 +362,6 @@ namespace core
         if(id.isPost())
           m_postIds.push_back(id);
   }
-
 } // namespace core
 
 /* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/core/src/BlogProcessor.cpp $ ]=== */

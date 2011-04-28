@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: Comment.cpp 64 2011-04-24 16:27:13Z kua $ 
+ * $Id: Comment.cpp 66 2011-04-26 19:07:12Z kua $ 
  *
  * \file Comment.cpp
  * \brief CComment implementation
@@ -105,9 +105,10 @@ namespace core
 
     triplets.append(SmartSpace::CSSHandler::createDefaultTriple(parentId()->ssId(), SmartSpace::HAS_COMMENT, id()->ssId()));
     triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TYPE, SmartSpace::COMMENT));
-    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TITLE, title()));
-    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TEXT, text()));
-    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::POSTER, SmartSpace::PERSON_NAME));
+    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TITLE, encodeString(title().toUtf8())));
+    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TEXT, encodeString(text().toUtf8())));
+    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::POSTER, SmartSpace::ACCOUNT_NAME));
+    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::SCRIBO_TYPE, "3"));
 
     return triplets;
   }
@@ -120,6 +121,8 @@ namespace core
     os << "Title: " << comment.title() << "; ";
     os << "Text: " << comment.text() << "; ";
     os << "ditemId: " << comment.id()->ljId() << "; ";
+    os << "parenLjId: " << comment.parentId()->ljId() << "; ";
+    os << "parenSsId: " << comment.parentId()->ssId() << "; ";
 
     return os;
   }

@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: LjHandler.cpp 64 2011-04-24 16:27:13Z kua $ 
+ * $Id: LjHandler.cpp 65 2011-04-25 19:46:33Z kua $ 
  *
  * \file LjHandler.cpp
  * \brief CLjHandler implementation
@@ -42,6 +42,7 @@
 
 #include <QDebug>
 #include <QNetworkReply>
+#include <QNetworkProxy>
 #include <QCryptographicHash>
 #include <QNetworkCookieJar>
 #include <QSharedPointer>
@@ -59,12 +60,20 @@ namespace BlogService
     QObject(parent), m_userName(userName), m_password(password)
   {
     m_networkManager = new QNetworkAccessManager();
+
     m_url.setUrl(serviceUrl + "/interface/xmlrpc");
 
     m_postProcessor = NULL;
 
     connect(m_networkManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(httpDone(QNetworkReply*)));
    }
+
+  void CLjHandler::setProxy(QString proxyName, quint16 port)
+  {
+    QNetworkProxy proxy(QNetworkProxy::HttpProxy,proxyName,port);
+
+    m_networkManager->setProxy(proxy);
+  }
 
   void CLjHandler::sendRequest(QByteArray textRequest)
   {
@@ -261,7 +270,7 @@ namespace BlogService
     parameters.insert("year", QString::number(date.year()));
     parameters.insert("mon", QString::number(date.month()));
     parameters.insert("day", QString::number(date.day()));
-    parameters.insert("hour", QString::number(time.hour()));
+    parameters.insert("hour", QString::number(time.hour()-3));
     parameters.insert("min", QString::number(time.minute()));
 
     QString request = CRequestCreator::createRequest("LJ.XMLRPC.postevent", parameters);

@@ -30,40 +30,31 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: main.cpp 65 2011-04-25 19:46:33Z kua $ 
+ * $Id$ 
  *
- * \file main.cpp
+ * \file ExitListener.cpp
+ * \brief CExitListener implementation
  *
  * File description
  *
  * PROJ: OSLL/scblog
  * ---------------------------------------------------------------- */
 
-#include <QtCore>
-#include "BlogProcessor.h"
+#include <QDebug>
 #include "ExitListener.h"
-#include "q_whiteboard_node.h"
-#include "q_sib_discovery.h"
-#include <glib-object.h>
 
-int main(int argc, char *argv[])
+namespace core
 {
-  QCoreApplication app(argc, argv);
-  QTextCodec *rusCodec = QTextCodec::codecForName("UTF-8");
-  QTextCodec::setCodecForTr(rusCodec);
+  void CExitListener::run()
+  {
+    int ch = 0;
 
-  g_type_init();
+    while ((ch = getchar()) != 'q')
+    {
+    }
 
-  core::CBlogProcessor processor;
-  processor.deserialize();
-  processor.init();
+    emit finished();
+  }
+} // namespace core
 
-  core::CExitListener exitListener;
-
-  QObject::connect(&exitListener, SIGNAL(finished()), &app, SLOT(quit()));
-  exitListener.start(QThread::LowPriority);
-
-  return app.exec();
-}
-
-/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/main.cpp $ ]=== */
+/* ===[ End of file $HeadURL$ ]=== */

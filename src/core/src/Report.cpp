@@ -156,7 +156,14 @@ namespace core
   QList<Triple *> CReport::triplets() const
   {
     QList<Triple *> triples = CPost::triplets();
-    triples.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::DESCRIBE, userId()));
+    //triples.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::DESCRIBE, userId()));
+
+    return triples;
+  }
+
+  QList<Triple *> CReport::scTriplets() const
+  {
+    QList<Triple *> triples = SmartSpace::CSSHandler::createTripleList(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::DESCRIBE, userId()));
 
     return triples;
   }

@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: LjManager.cpp 64 2011-04-24 16:27:13Z kua $ 
+ * $Id: LjManager.cpp 66 2011-04-26 19:07:12Z kua $ 
  *
  * \file LjManager.cpp
  * \brief CLjManager implementation
@@ -103,6 +103,16 @@ namespace BlogService
     m_taskQueue.enqueue(&BlogService::CLjHandler::sendComment);
 
     performTask();
+  }
+
+  bool CLjManager::isWait()
+  {
+    return m_taskQueue.isEmpty();
+  }
+
+  bool CLjManager::isLoadComment()
+  {
+    return m_taskQueue.contains(&BlogService::CLjHandler::loadComments);
   }
 } // namespace BlogService
 

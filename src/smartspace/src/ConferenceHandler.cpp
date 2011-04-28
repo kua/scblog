@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: ConferenceHandler.cpp 60 2011-04-21 16:42:47Z kua $ 
+ * $Id: ConferenceHandler.cpp 65 2011-04-25 19:46:33Z kua $ 
  *
  * \file ConferenceHandler.cpp
  * \brief CConferenceHandler implementation
@@ -47,18 +47,25 @@
 
 namespace SmartSpace
 {
+  static const QString CONFERENCE_SUBSCRIPTION = "scheduleChanges";
+
   CConferenceHandler::CConferenceHandler(QString sibUri, QObject *parent) :
     CSSHandler(sibUri, parent)
   {
     connect(this,SIGNAL(transactionDone()),this,SLOT(checkReportsBuffer()));
 
     m_postProcessor = NULL;
-    subscribeToScheduleChanges();
+    //subscribeToScheduleChanges();
+  }
+
+  CConferenceHandler::~CConferenceHandler()
+  {
+    getNode()->unsubscribe(getSubscription(CONFERENCE_SUBSCRIPTION).data());
   }
 
   void CConferenceHandler::subscribeToScheduleChanges()
   {
-    QSharedPointer<TemplateSubscription> subscription = creatreSubscription("scheduleChanges");
+    QSharedPointer<TemplateSubscription> subscription = creatreSubscription(CONFERENCE_SUBSCRIPTION);
 
     connect(subscription.data(), SIGNAL(indication()), this, SLOT(refreshReportsRequest()) );
 
@@ -233,6 +240,11 @@ namespace SmartSpace
     emit loadReportsDone(m_posts.values());
     m_posts.clear();///
     emit transactionDone();
+  }
+
+  void CConferenceHandler::saveReport(QSharedPointer<core::CReport> report)
+  {
+    insert(report->scTriplets());
   }
 
 } // namespace smartspace

@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: ConferenceHandler.h 60 2011-04-21 16:42:47Z kua $ */
+/* $Id: ConferenceHandler.h 65 2011-04-25 19:46:33Z kua $ */
 /*!
  * \file ConferenceHandler.h
  * \brief Header of CConferenceHandler
@@ -72,8 +72,6 @@ namespace SmartSpace
     void processPresentation(QList<Triple *> triple);
     void recieveReports(QList<Triple *> triple);
 
-    void subscribeToScheduleChanges();
-
   private slots:
     void refreshReportsRequest();
     void checkExistingReports();
@@ -87,9 +85,11 @@ namespace SmartSpace
   public:
     CConferenceHandler(QObject *parent = 0) : CSSHandler(parent) {};
     CConferenceHandler(QString sibUri, QObject *parent = 0);
-    ~CConferenceHandler() {}
+    ~CConferenceHandler();
     
+    void subscribeToScheduleChanges();
     void loadReports();
+    void saveReport(QSharedPointer<core::CReport> report);
 
   }; // class CConferenceHandler
 } // namespace smartspace

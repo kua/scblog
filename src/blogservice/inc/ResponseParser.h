@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: ResponseParser.h 59 2011-04-18 14:14:17Z kua $ */
+/* $Id: ResponseParser.h 66 2011-04-26 19:07:12Z kua $ */
 /*!
  * \file ResponseParser.h
  * \brief Header of CResponseParser
@@ -65,7 +65,8 @@ namespace BlogService
     ID,
     POST_DATE,
     COMMENT_DATE,
-    CHILD_COMMENT
+    CHILD_COMMENT,
+    PARENT_ID
   };
 
   /*!
@@ -102,6 +103,7 @@ namespace BlogService
 
       QDomNode eventsSeparator;
       QString id;
+      QString parentId;
 
       while(!node.isNull())
       {
@@ -138,6 +140,11 @@ namespace BlogService
                   id = parseValue(value);
                   element->id()->setLjId(id);
                   break;
+                case PARENT_ID:
+                  parentId = parseValue(value);
+                  if (parentId != "0")
+                    element->parentId()->setLjId(parentId);
+                  break;
                 case POST_DATE:
                 case COMMENT_DATE:
                   elements.push_back(element);
@@ -149,9 +156,13 @@ namespace BlogService
                  {
                   QList<QSharedPointer<Element> > childElements = parseElements<Element>(value);
                   foreach(QSharedPointer<Element> childElement, childElements)
-                    if (!childElement->parentId()->isLjIdSet())
-                      childElement->parentId()->setLjId(id);
+                  {
+                    qDebug() << "Parser::oldLjId" <<childElement->parentId()->ljId()<<"Id"<<element->id()->ljId();
+                    if (!childElement->parentId()->isLjIdSet())//
+                       childElement->parentId()->setLjId(id);//
+                  }
                   elements.append(childElements);
+
                  }
                  break;
                 default:

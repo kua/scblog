@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: LjHandler.h 62 2011-04-23 19:53:07Z kua $ */
+/* $Id: LjHandler.h 65 2011-04-25 19:46:33Z kua $ */
 /*!
  * \file LjHandler.h
  * \brief Header of CLjHandler
@@ -110,6 +110,7 @@ namespace BlogService
   public:
 
     CLjHandler(const QString& serviceUrl, const QString& userName, const QString& password, QObject *parent = 0);
+    void setProxy(QString proxyName, quint16 port);
 
   public slots:
     bool isReady();

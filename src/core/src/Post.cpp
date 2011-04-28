@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: Post.cpp 59 2011-04-18 14:14:17Z kua $ 
+ * $Id: Post.cpp 66 2011-04-26 19:07:12Z kua $ 
  *
  * \file Post.cpp
  * \brief Post implementation
@@ -88,8 +88,8 @@ namespace core
 
     triplets.append(SmartSpace::CSSHandler::createDefaultTriple(SmartSpace::ACCOUNT_NAME, SmartSpace::HAS_POST, id()->ssId()));
     triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TYPE, SmartSpace::POST));
-    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TITLE, title()));
-    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TEXT, text()));
+    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TITLE, encodeString(title().toUtf8())));
+    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TEXT, encodeString(text().toUtf8())));
 
     return triplets;
   }

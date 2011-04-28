@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: BlogObject.h 62 2011-04-23 19:53:07Z kua $ */
+/* $Id: BlogObject.h 66 2011-04-26 19:07:12Z kua $ */
 /*!
  * \file BlogObject.h
  * \brief Header of IBlogObject
@@ -65,6 +65,7 @@ namespace core
 
   protected:
     virtual QString generateId();
+    QString encodeString(QByteArray bytes) const;
 
   public:
     IBlogObject();

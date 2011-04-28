@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: ResponseParser.cpp 59 2011-04-18 14:14:17Z kua $ 
+ * $Id: ResponseParser.cpp 66 2011-04-26 19:07:12Z kua $ 
  *
  * \file ResponseParser.cpp
  * \brief CResponseParser implementation
@@ -58,6 +58,7 @@ namespace BlogService
     MEMBERS_NAMES.insert(QString("comments"), BlogService::COMMENTS);
     MEMBERS_NAMES.insert(QString("body"), BlogService::BODY);
     MEMBERS_NAMES.insert(QString("dtalkid"), BlogService::ID);
+    MEMBERS_NAMES.insert(QString("parentdtalkid"), BlogService::PARENT_ID);
     MEMBERS_NAMES.insert(QString("eventtime"), BlogService::POST_DATE);
     MEMBERS_NAMES.insert(QString("datepost"), BlogService::COMMENT_DATE);
     MEMBERS_NAMES.insert(QString("children"), BlogService::CHILD_COMMENT);

@@ -72,6 +72,8 @@ namespace core
   {
     return (((!obj.ssId().isEmpty()) && (obj.ssId() == ssId()))
         || ((!obj.ljId().isEmpty()) && (obj.ljId() == ljId())));
+
+    //&& ((!obj.postId().isEmpty()) && (obj.postId() == postId())) )
   }
 
   void CId::setLjId(QString ljId)

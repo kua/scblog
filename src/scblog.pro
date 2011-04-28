@@ -1,4 +1,4 @@
-# $Id: scblog.pro 59 2011-04-18 14:14:17Z kua $
+# $Id: scblog.pro 65 2011-04-25 19:46:33Z kua $
 
 TEMPLATE      = app
 QT            = core network xml
@@ -17,6 +17,7 @@ HEADERS       = core/inc/BlogObject.h \
                 core/inc/Report.h \                
                 core/inc/Comment.h \
                 core/inc/Id.h \
+                core/inc/ExitListener.h \
                 blogservice/inc/LjHandler.h \
                 blogservice/inc/LjManager.h \
                 blogservice/inc/RequestCreator.h \
@@ -31,6 +32,7 @@ SOURCES       = core/src/BlogObject.cpp \
                 core/src/Report.cpp \                
                 core/src/Comment.cpp \
                 core/src/Id.cpp \
+                core/src/ExitListener.cpp \                
                 blogservice/src/LjHandler.cpp \
                 blogservice/src/LjManager.cpp \
                 blogservice/src/RequestCreator.cpp \

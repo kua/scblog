@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: LjManager.h 62 2011-04-23 19:53:07Z kua $ */
+/* $Id: LjManager.h 66 2011-04-26 19:07:12Z kua $ */
 /*!
  * \file LjManager.h
  * \brief Header of CLjManager
@@ -69,6 +69,8 @@ namespace BlogService
   public:
     CLjManager(QObject *parent = 0);
 
+    bool isWait();
+    bool isLoadComment();
     void login();
     void loadComments(core::CId postId);
     void loadPosts();

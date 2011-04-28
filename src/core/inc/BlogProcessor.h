@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: BlogProcessor.h 62 2011-04-23 19:53:07Z kua $ */
+/* $Id: BlogProcessor.h 66 2011-04-26 19:07:12Z kua $ */
 /*!
  * \file BlogProcessor.h
  * \brief Header of CBlogProcessor
@@ -44,6 +44,7 @@
 #define _BlogProcessor_H_6C2A1FA7_62E3_4C80_A293_D3F9910D483E_INCLUDED_
 
 #include <QList>
+#include <QTimer>
 #include <QSharedPointer>
 #include "LjManager.h"
 #include "ScriboHandler.h"
@@ -73,12 +74,18 @@ namespace core
     SmartSpace::CConferenceHandler* m_conferenceHandler;
     SmartSpace::CScriboHandler* m_scriboHandler;
 
+    QTimer* m_timer;
+
     QMap<CId, QSharedPointer<IBlogObject> > m_blogObjects;
     QList<CId> m_postIds;
 
     QList<QSharedPointer<CComment> > m_toSsList;
 
     QList<CId> m_idList;
+
+    int m_postsCounter;
+
+    QMap<QString, QSharedPointer<core::CPost> > m_existingLjPosts;
 
     bool setParent(QSharedPointer<CComment> comment, bool copyPostId);
     void saveCommentToSs();
@@ -87,6 +94,7 @@ namespace core
     void printSerializedMap();
     CId getFullId(const CId id);
     void storeBlogObject(CId id, QSharedPointer<IBlogObject> blogObject);
+    void loadExistingLjPosts();
 
   private slots:
 
@@ -97,6 +105,8 @@ namespace core
     void refreshComments();
     void storePost(core::CId id, QSharedPointer<core::CPost> post);
     void storeComment(core::CId id, QSharedPointer<core::CComment> comment);
+    void refreshByTimer();
+    void reciveLjPosts(QList<QSharedPointer<core::CPost> > posts);
 
   public:
     CBlogProcessor();

@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: Ontology.h 63 2011-04-23 22:20:00Z kua $ */
+/* $Id: Ontology.h 66 2011-04-26 19:07:12Z kua $ */
 /*!
  * \file Ontology.h
  * \brief Header of COntology
@@ -47,6 +47,9 @@
 
 namespace SmartSpace
 {
+  static const QString ACCOUNT_LOGIN = "osll";
+  static const QString ACCOUNT_PASSWORD = "scblog1861";
+
   static const QString ANY = "sib:any";
   static const QString TYPE = "rdf:type";
 
@@ -74,14 +77,20 @@ namespace SmartSpace
   static const QString HAS_COMMENT = "scribo_hasComment";
   static const QString HAS_POST = "scribo_hasPost";
   static const QString POSTER = "scribo_poster";
+  static const QString LOGIN = "scribo_login";
+  static const QString PASSWORD = "scribo_password";
+  static const QString SCRIBO_TYPE = "scribo_type";
   
   static const QString ACCOUNT_TYPE = "foaf_account";
   static const QString PERSON_INFORMATION = "scribo_personInformation";
 
   // Scribo Notifications
   static const QString REFRESH_COMMENTS = "refreshComments";
+  static const QString REFRESH_POSTS = "refreshPosts";
   static const QString SEND_COMMENT = "sendComment";
   static const QString COMMENT_ID = "comId";
+  static const QString PARENT_ID = "parId";
+  static const QString NOTIFICATION = "Notification-";
 
 } // namespace smartspace
 
