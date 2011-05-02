@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: BlogProcessor.cpp 66 2011-04-26 19:07:12Z kua $ 
+ * $Id: BlogProcessor.cpp 67 2011-05-02 20:09:17Z kua $ 
  *
  * \file BlogProcessor.cpp
  * \brief CBlogProcessor implementation
@@ -59,7 +59,9 @@ namespace core
     QSharedPointer<BlogService::CLjHandler> ljHandler =
     //QSharedPointer<BlogService::CLjHandler> (new BlogService::CLjHandler("http://demo-lj.cs.karelia.ru", "scblog", "scblog1861", m_ljManager));
     //QSharedPointer<BlogService::CLjHandler> (new BlogService::CLjHandler("http://www.livejournal.com", "osll", "scblog1861", m_ljManager));
-    QSharedPointer<BlogService::CLjHandler> (new BlogService::CLjHandler("http://www.livejournal.com", "scfruct", "fruct9", m_ljManager));
+    //QSharedPointer<BlogService::CLjHandler> (new BlogService::CLjHandler("http://www.livejournal.com", "scfruct", "fruct9", m_ljManager));
+    QSharedPointer<BlogService::CLjHandler> (new BlogService::CLjHandler("http://www.livejournal.com", "fruct9", "scblog9", m_ljManager));
+
     QString proxyName = "proxy.karelia.ru";
     ljHandler->setProxy(proxyName, 81);
 
@@ -88,7 +90,7 @@ namespace core
     QObject::connect(m_scriboHandler, SIGNAL(refreshComments()), this, SLOT(refreshComments()));
 
     m_timer = new QTimer(this);
-    m_timer->start(100000);
+    m_timer->start(300000);
 
     QObject::connect(m_timer,SIGNAL(timeout()), this, SLOT(refreshByTimer()));
   }

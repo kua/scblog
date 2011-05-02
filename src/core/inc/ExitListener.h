@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id$ */
+/* $Id: ExitListener.h 67 2011-05-02 20:09:17Z kua $ */
 /*!
  * \file ExitListiner.h
  * \brief Header of CExitListiner
@@ -70,4 +70,4 @@ namespace core
 
 #endif //_ExitListener_H_D381DA06_CF52_48B2_9128_48BD337A5F49_INCLUDED_
 
-/* ===[ End of file $HeadURL$ ]=== */
+/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/core/inc/ExitListener.h $ ]=== */

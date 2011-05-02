@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: ConferenceHandler.cpp 65 2011-04-25 19:46:33Z kua $ 
+ * $Id: ConferenceHandler.cpp 67 2011-05-02 20:09:17Z kua $ 
  *
  * \file ConferenceHandler.cpp
  * \brief CConferenceHandler implementation

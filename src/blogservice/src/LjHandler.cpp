@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: LjHandler.cpp 65 2011-04-25 19:46:33Z kua $ 
+ * $Id: LjHandler.cpp 67 2011-05-02 20:09:17Z kua $ 
  *
  * \file LjHandler.cpp
  * \brief CLjHandler implementation
@@ -394,9 +394,13 @@ namespace BlogService
     foreach(QSharedPointer<core::CComment> comment, comments)
     {
       comment->id()->setPostId(postId);
+      comment->parentId()->setPostId(postId);///
 
       if (!comment->parentId()->isLjIdSet())
+      {
         comment->parentId()->setLjId(postId);
+        comment->parentId()->setPostId(QString(""));///
+      }
     }
 
     qDebug() << "Comments size" << comments.size();

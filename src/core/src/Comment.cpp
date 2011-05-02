@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: Comment.cpp 66 2011-04-26 19:07:12Z kua $ 
+ * $Id: Comment.cpp 67 2011-05-02 20:09:17Z kua $ 
  *
  * \file Comment.cpp
  * \brief CComment implementation
@@ -107,7 +107,7 @@ namespace core
     triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TYPE, SmartSpace::COMMENT));
     triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TITLE, encodeString(title().toUtf8())));
     triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::TEXT, encodeString(text().toUtf8())));
-    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::POSTER, SmartSpace::ACCOUNT_NAME));
+    triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::POSTER, SmartSpace::ACCOUNT_LOGIN));
     triplets.append(SmartSpace::CSSHandler::createDefaultTriple(id()->ssId(), SmartSpace::SCRIBO_TYPE, "3"));
 
     return triplets;

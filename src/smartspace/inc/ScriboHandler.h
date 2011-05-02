@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: ScriboHandler.h 65 2011-04-25 19:46:33Z kua $ */
+/* $Id: ScriboHandler.h 67 2011-05-02 20:09:17Z kua $ */
 /*!
  * \file ScriboHandler.h
  * \brief Header of CScriboHandler

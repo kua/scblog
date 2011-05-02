@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: Id.cpp 62 2011-04-23 19:53:07Z kua $ 
+ * $Id: Id.cpp 67 2011-05-02 20:09:17Z kua $ 
  *
  * \file Id.cpp
  * \brief CId implementation
@@ -70,10 +70,21 @@ namespace core
 
   bool CId::operator==(const CId& obj) const
   {
-    return (((!obj.ssId().isEmpty()) && (obj.ssId() == ssId()))
+   /* return (((!obj.ssId().isEmpty()) && (obj.ssId() == ssId()))
         || ((!obj.ljId().isEmpty()) && (obj.ljId() == ljId())));
+*/
+    bool isSSIds = ((!obj.ssId().isEmpty()) && (obj.ssId() == ssId()));
+    bool isEqualsPCIds = (((!obj.ljId().isEmpty()) && (obj.ljId() == obj.postId())) || ((!ljId().isEmpty()) && (ljId() == postId())));
+    bool fullEqualsLjId = ((obj.ljId() == ljId()) && (obj.postId() == postId()));
+    bool notFullEquals = ((!obj.ljId().isEmpty()) && (obj.ljId() == ljId()));
 
-    //&& ((!obj.postId().isEmpty()) && (obj.postId() == postId())) )
+    if (isSSIds)
+      return true;
+
+    if (isEqualsPCIds)
+      return fullEqualsLjId;
+
+    return notFullEquals;
   }
 
   void CId::setLjId(QString ljId)

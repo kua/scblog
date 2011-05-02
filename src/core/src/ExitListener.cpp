@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id$ 
+ * $Id: ExitListener.cpp 67 2011-05-02 20:09:17Z kua $ 
  *
  * \file ExitListener.cpp
  * \brief CExitListener implementation
@@ -57,4 +57,4 @@ namespace core
   }
 } // namespace core
 
-/* ===[ End of file $HeadURL$ ]=== */
+/* ===[ End of file $HeadURL: svn+ssh://kua@osll.spb.ru/svn/scblog/trunk/src/core/src/ExitListener.cpp $ ]=== */

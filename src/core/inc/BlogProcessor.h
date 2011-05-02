@@ -29,7 +29,7 @@
  * The advertising clause requiring mention in adverts must never be included.
  */
 
-/* $Id: BlogProcessor.h 66 2011-04-26 19:07:12Z kua $ */
+/* $Id: BlogProcessor.h 67 2011-05-02 20:09:17Z kua $ */
 /*!
  * \file BlogProcessor.h
  * \brief Header of CBlogProcessor

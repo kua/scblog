@@ -30,7 +30,7 @@
  */
 
 /*! ---------------------------------------------------------------
- * $Id: ScriboHandler.cpp 66 2011-04-26 19:07:12Z kua $ 
+ * $Id: ScriboHandler.cpp 67 2011-05-02 20:09:17Z kua $ 
  *
  * \file ScriboHandler.cpp
  * \brief CScriboHandler implementation
